@@ -1,0 +1,27 @@
+.DS_Store
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.venv/
+venv/
+.env
+.env.*
+!.env.example
+
+# Local/model data
+/data/raw/
+/data/interim/
+/data/processed/
+/data/cache/
+*.parquet
+*.feather
+
+# Model artifacts
+/artifacts/
+/models/*.joblib
+/models/*.pkl
+
+# IDE
+.vscode/
+.idea/
