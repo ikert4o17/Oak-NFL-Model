@@ -1,0 +1,28 @@
+name: Benchmark V11
+
+on:
+  pull_request:
+    paths:
+      - "oak_nfl/weather.py"
+      - "oak_nfl/data/nflverse.py"
+      - "scripts/run_v11_weather_analysis.py"
+      - "tests/test_weather.py"
+      - "docs/v11-weather-plan.md"
+      - ".github/workflows/benchmark-v11.yml"
+  workflow_dispatch:
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: python -m pip install --upgrade pip && pip install -e ".[dev]"
+      - name: Validate V11 weather framework
+        run: pytest tests/test_weather.py
+      - name: Run Oak V11 weather/acclimation diagnostic
+        run: python scripts/run_v11_weather_analysis.py
