@@ -1,0 +1,26 @@
+name: Benchmark V12
+
+on:
+  pull_request:
+    paths:
+      - "oak_nfl/scoring_efficiency.py"
+      - "scripts/run_v12_scoring_efficiency.py"
+      - "tests/test_scoring_efficiency.py"
+      - ".github/workflows/benchmark-v12.yml"
+  workflow_dispatch:
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: python -m pip install --upgrade pip && pip install -e ".[dev]"
+      - name: Validate V12 scoring efficiency features
+        run: pytest tests/test_scoring_efficiency.py
+      - name: Run Oak V12 scoring efficiency benchmark
+        run: python scripts/run_v12_scoring_efficiency.py
