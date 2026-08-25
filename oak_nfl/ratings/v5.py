@@ -1,0 +1,156 @@
+"""Oak V5 ratings: V2-style priors and recency for EPA, success, and explosives."""
+
+from __future__ import annotations
+
+import numpy as np
+import pandas as pd
+
+_METRICS = ("epa_per_play", "success_rate", "explosive_rate")
+V5_INTERCEPT = 1.6471
+V5_EPA_COEF = 31.1749
+V5_SUCCESS_COEF = 29.2360
+V5_EXPLOSIVE_COEF = 8.1386
+
+
+def _weighted_mean(values: list[float], decay: float) -> float:
+    clean = np.asarray([value for value in values if pd.notna(value)], dtype=float)
+    if clean.size == 0:
+        return np.nan
+    ages = np.arange(clean.size - 1, -1, -1, dtype=float)
+    weights = np.power(decay, ages)
+    return float(np.average(clean, weights=weights))
+
+
+def _blend(prior: float, history: list[float], prior_games: float, decay: float) -> float:
+    current = _weighted_mean(history, decay)
+    n = sum(pd.notna(value) for value in history)
+    if n == 0 or pd.isna(current):
+        return float(prior)
+    return float((prior_games * prior + n * current) / (prior_games + n))
+
+
+def build_v5_pregame_ratings(
+    team_games: pd.DataFrame,
+    *,
+    prior_games: float = 4.0,
+    prior_regression: float = 0.50,
+    recency_decay: float = 0.85,
+) -> pd.DataFrame:
+    """Build leakage-safe offense/defense ratings for three complementary metrics."""
+    required = {"game_id", "season", "week", "posteam", "defteam", *_METRICS}
+    missing = required.difference(team_games.columns)
+    if missing:
+        raise ValueError(f"team-game features missing required columns: {sorted(missing)}")
+
+    games = team_games.sort_values(["season", "week", "game_id"]).copy()
+    seasons = sorted(games["season"].dropna().astype(int).unique())
+    rows: list[dict[str, float | int | str]] = []
+
+    yearly_off = {
+        metric: games.groupby(["season", "posteam"])[metric].mean() for metric in _METRICS
+    }
+    yearly_def = {
+        metric: games.groupby(["season", "defteam"])[metric].mean() for metric in _METRICS
+    }
+    yearly_league = {metric: games.groupby("season")[metric].mean() for metric in _METRICS}
+
+    for season in seasons:
+        season_games = games.loc[games["season"].eq(season)]
+        teams = sorted(set(season_games["posteam"].dropna()) | set(season_games["defteam"].dropna()))
+        previous = season - 1
+
+        priors: dict[str, dict[str, tuple[float, float]]] = {team: {} for team in teams}
+        for team in teams:
+            for metric in _METRICS:
+                league = float(yearly_league[metric].get(previous, games[metric].mean()))
+                raw_off = float(yearly_off[metric].get((previous, team), league))
+                raw_def = float(yearly_def[metric].get((previous, team), league))
+                priors[team][metric] = (
+                    league + prior_regression * (raw_off - league),
+                    league + prior_regression * (raw_def - league),
+                )
+
+        off_history = {team: {metric: [] for metric in _METRICS} for team in teams}
+        def_history = {team: {metric: [] for metric in _METRICS} for team in teams}
+
+        for week in sorted(season_games["week"].dropna().unique()):
+            week_games = season_games.loc[season_games["week"].eq(week)]
+            snapshot: dict[str, dict[str, tuple[float, float]]] = {team: {} for team in teams}
+            for team in teams:
+                for metric in _METRICS:
+                    prior_off, prior_def = priors[team][metric]
+                    snapshot[team][metric] = (
+                        _blend(prior_off, off_history[team][metric], prior_games, recency_decay),
+                        _blend(prior_def, def_history[team][metric], prior_games, recency_decay),
+                    )
+
+            for game in week_games.itertuples(index=False):
+                for team in (game.posteam, game.defteam):
+                    if team not in snapshot:
+                        continue
+                    row: dict[str, float | int | str] = {
+                        "season": season,
+                        "week": int(week),
+                        "game_id": game.game_id,
+                        "team": team,
+                    }
+                    for metric in _METRICS:
+                        off_value, def_value = snapshot[team][metric]
+                        row[f"pregame_off_{metric}"] = off_value
+                        row[f"pregame_def_{metric}_allowed"] = def_value
+                    rows.append(row)
+
+            # Histories update only after the entire week has been snapshotted.
+            for game in week_games.itertuples(index=False):
+                for metric in _METRICS:
+                    value = float(getattr(game, metric))
+                    off_history[game.posteam][metric].append(value)
+                    def_history[game.defteam][metric].append(value)
+
+    return pd.DataFrame(rows).drop_duplicates(["season", "week", "game_id", "team"])
+
+
+def build_v5_game_predictions(games: pd.DataFrame, ratings: pd.DataFrame) -> pd.DataFrame:
+    """Predict home margin with coefficients selected on 2015-2022 training data."""
+    metric_cols = [
+        "pregame_off_epa_per_play",
+        "pregame_def_epa_per_play_allowed",
+        "pregame_off_success_rate",
+        "pregame_def_success_rate_allowed",
+        "pregame_off_explosive_rate",
+        "pregame_def_explosive_rate_allowed",
+    ]
+    home = ratings[["game_id", "team", *metric_cols]].rename(
+        columns={"team": "home_team", **{col: f"home_{col}" for col in metric_cols}}
+    )
+    away = ratings[["game_id", "team", *metric_cols]].rename(
+        columns={"team": "away_team", **{col: f"away_{col}" for col in metric_cols}}
+    )
+    output = games.merge(home, on=["game_id", "home_team"], how="left", validate="one_to_one")
+    output = output.merge(away, on=["game_id", "away_team"], how="left", validate="one_to_one")
+
+    epa_gap = (
+        output["home_pregame_off_epa_per_play"]
+        - output["home_pregame_def_epa_per_play_allowed"]
+        - output["away_pregame_off_epa_per_play"]
+        + output["away_pregame_def_epa_per_play_allowed"]
+    )
+    success_gap = (
+        output["home_pregame_off_success_rate"]
+        - output["home_pregame_def_success_rate_allowed"]
+        - output["away_pregame_off_success_rate"]
+        + output["away_pregame_def_success_rate_allowed"]
+    )
+    explosive_gap = (
+        output["home_pregame_off_explosive_rate"]
+        - output["home_pregame_def_explosive_rate_allowed"]
+        - output["away_pregame_off_explosive_rate"]
+        + output["away_pregame_def_explosive_rate_allowed"]
+    )
+    output["predicted_home_margin"] = (
+        V5_INTERCEPT
+        + V5_EPA_COEF * epa_gap
+        + V5_SUCCESS_COEF * success_gap
+        + V5_EXPLOSIVE_COEF * explosive_gap
+    )
+    return output
