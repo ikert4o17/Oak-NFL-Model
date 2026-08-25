@@ -9,6 +9,7 @@ from oak_nfl.data.games import build_game_results
 from oak_nfl.features import build_team_game_features, build_team_weekly_ratings
 from oak_nfl.ratings.baseline import build_game_predictions, efficiency_rating_frame
 from oak_nfl.ratings.v2 import build_v2_pregame_ratings
+from oak_nfl.ratings.v5 import build_v5_game_predictions, build_v5_pregame_ratings
 
 
 def run_baseline_backtest(
@@ -91,5 +92,31 @@ def run_v4_backtest(
         home_field_points=home_field_points,
         epa_to_points=epa_to_points,
     )
+    metrics = evaluate_margin_predictions(predictions)
+    return predictions, metrics
+
+
+def run_v5_backtest(
+    pbp: pd.DataFrame,
+    *,
+    prior_games: float = 4.0,
+    prior_regression: float = 0.50,
+    recency_decay: float = 0.85,
+) -> tuple[pd.DataFrame, dict[str, float]]:
+    """Run promoted Oak V5 with EPA, success rate, and explosive-play rate.
+
+    V5 uses V2-style preseason priors and recency weighting for all three metrics.
+    Its margin coefficients were learned on 2015-2022 and validated unchanged on
+    the 2023-2025 holdout before promotion.
+    """
+    team_games = build_team_game_features(pbp)
+    ratings = build_v5_pregame_ratings(
+        team_games,
+        prior_games=prior_games,
+        prior_regression=prior_regression,
+        recency_decay=recency_decay,
+    )
+    games = build_game_results(pbp)
+    predictions = build_v5_game_predictions(games, ratings)
     metrics = evaluate_margin_predictions(predictions)
     return predictions, metrics
