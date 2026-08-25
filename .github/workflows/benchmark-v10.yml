@@ -1,0 +1,32 @@
+name: Benchmark V10
+
+on:
+  pull_request:
+    paths:
+      - "scripts/run_v10_benchmark.py"
+      - "oak_nfl/personnel.py"
+      - "oak_nfl/personnel_value.py"
+      - "oak_nfl/data/injuries.py"
+      - "oak_nfl/data/nflverse.py"
+      - "tests/test_personnel.py"
+      - "tests/test_personnel_value.py"
+      - "tests/test_injuries.py"
+      - "docs/v10-data-plan.md"
+      - ".github/workflows/benchmark-v10.yml"
+  workflow_dispatch:
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: python -m pip install --upgrade pip && pip install -e ".[dev]"
+      - name: Validate V10 framework
+        run: pytest tests/test_injuries.py tests/test_personnel.py tests/test_personnel_value.py
+      - name: Run Oak V10 historical injury benchmark
+        run: python scripts/run_v10_benchmark.py
