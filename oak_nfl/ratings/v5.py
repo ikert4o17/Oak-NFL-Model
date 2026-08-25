@@ -6,6 +6,10 @@ import numpy as np
 import pandas as pd
 
 _METRICS = ("epa_per_play", "success_rate", "explosive_rate")
+V5_INTERCEPT = 1.6471
+V5_EPA_COEF = 31.1749
+V5_SUCCESS_COEF = 29.2360
+V5_EXPLOSIVE_COEF = 8.1386
 
 
 def _weighted_mean(values: list[float], decay: float) -> float:
@@ -104,3 +108,49 @@ def build_v5_pregame_ratings(
                     def_history[game.defteam][metric].append(value)
 
     return pd.DataFrame(rows).drop_duplicates(["season", "week", "game_id", "team"])
+
+
+def build_v5_game_predictions(games: pd.DataFrame, ratings: pd.DataFrame) -> pd.DataFrame:
+    """Predict home margin with coefficients selected on 2015-2022 training data."""
+    metric_cols = [
+        "pregame_off_epa_per_play",
+        "pregame_def_epa_per_play_allowed",
+        "pregame_off_success_rate",
+        "pregame_def_success_rate_allowed",
+        "pregame_off_explosive_rate",
+        "pregame_def_explosive_rate_allowed",
+    ]
+    home = ratings[["game_id", "team", *metric_cols]].rename(
+        columns={"team": "home_team", **{col: f"home_{col}" for col in metric_cols}}
+    )
+    away = ratings[["game_id", "team", *metric_cols]].rename(
+        columns={"team": "away_team", **{col: f"away_{col}" for col in metric_cols}}
+    )
+    output = games.merge(home, on=["game_id", "home_team"], how="left", validate="one_to_one")
+    output = output.merge(away, on=["game_id", "away_team"], how="left", validate="one_to_one")
+
+    epa_gap = (
+        output["home_pregame_off_epa_per_play"]
+        - output["home_pregame_def_epa_per_play_allowed"]
+        - output["away_pregame_off_epa_per_play"]
+        + output["away_pregame_def_epa_per_play_allowed"]
+    )
+    success_gap = (
+        output["home_pregame_off_success_rate"]
+        - output["home_pregame_def_success_rate_allowed"]
+        - output["away_pregame_off_success_rate"]
+        + output["away_pregame_def_success_rate_allowed"]
+    )
+    explosive_gap = (
+        output["home_pregame_off_explosive_rate"]
+        - output["home_pregame_def_explosive_rate_allowed"]
+        - output["away_pregame_off_explosive_rate"]
+        + output["away_pregame_def_explosive_rate_allowed"]
+    )
+    output["predicted_home_margin"] = (
+        V5_INTERCEPT
+        + V5_EPA_COEF * epa_gap
+        + V5_SUCCESS_COEF * success_gap
+        + V5_EXPLOSIVE_COEF * explosive_gap
+    )
+    return output
