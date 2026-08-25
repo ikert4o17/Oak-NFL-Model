@@ -111,7 +111,7 @@ def build_v3_pregame_ratings(
             for game in week_games.itertuples(index=False):
                 if game.posteam not in snapshot or game.defteam not in snapshot:
                     continue
-                opp_off, opp_def = snapshot[game.defteam]
+                _, opp_def = snapshot[game.defteam]
                 observed = float(game.epa_per_play)
                 adjusted_off = observed - opponent_weight * (opp_def - league_def)
                 adjusted_def = observed - opponent_weight * (snapshot[game.posteam][0] - league_off)
