@@ -7,6 +7,7 @@ on:
       - "oak_nfl/data/nflverse.py"
       - "scripts/run_v11_weather_analysis.py"
       - "scripts/run_v11_wind_style.py"
+      - "scripts/run_v11_wind_stability.py"
       - "tests/test_weather.py"
       - "docs/v11-weather-plan.md"
       - ".github/workflows/benchmark-v11.yml"
@@ -29,3 +30,5 @@ jobs:
         run: python scripts/run_v11_weather_analysis.py
       - name: Run Oak V11 wind x offensive style diagnostic
         run: python scripts/run_v11_wind_style.py
+      - name: Run Oak V11 wind stability diagnostic
+        run: python scripts/run_v11_wind_stability.py
