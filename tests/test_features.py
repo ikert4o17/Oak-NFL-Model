@@ -1,7 +1,11 @@
 import pandas as pd
 import pytest
 
-from oak_nfl.features import build_team_game_features, build_team_weekly_ratings, clean_scrimmage_plays
+from oak_nfl.features import (
+    build_team_game_features,
+    build_team_weekly_ratings,
+    clean_scrimmage_plays,
+)
 
 
 def sample_pbp() -> pd.DataFrame:

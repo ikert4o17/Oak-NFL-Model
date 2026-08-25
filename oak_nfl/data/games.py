@@ -1,9 +1,6 @@
 """Game-level extraction helpers from nflverse play-by-play."""
 
-from __future__ import annotations
-
 import pandas as pd
-
 
 _REQUIRED_GAME_COLUMNS = {
     "game_id",
