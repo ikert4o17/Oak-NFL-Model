@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import bisect
 import re
 
 import numpy as np
@@ -53,15 +54,22 @@ def build_pregame_player_values(
     prior_season_games: int = 8,
     prior_season_weight: float = 0.75,
 ) -> pd.DataFrame:
-    """Build leakage-safe player values using all earlier games, including prior seasons.
+    """Build leakage-safe player values from completed snap history.
 
-    Same-season history is preferred. At a season boundary, up to the final
-    ``prior_season_games`` from the previous season are carried forward and
-    discounted by ``prior_season_weight``. This gives established starters a
-    sensible Week 1 value without using any information from the current game.
+    ``player_value`` is the value before the row's game. ``postgame_player_value``
+    includes that completed game's snap share and exists only so a later injury
+    week can carry forward the latest known workload when the player has no snap
+    row in the injury game itself.
     """
     required = {
-        "game_id", "season", "week", "team", "player", "position", "offense_pct", "defense_pct"
+        "game_id",
+        "season",
+        "week",
+        "team",
+        "player",
+        "position",
+        "offense_pct",
+        "defense_pct",
     }
     missing = required.difference(snap_counts.columns)
     if missing:
@@ -82,26 +90,34 @@ def build_pregame_player_values(
     snaps["snap_share"] = np.where(
         snaps["position_group"].isin(OFFENSE_GROUPS),
         offense,
-        np.where(snaps["position_group"].isin(DEFENSE_GROUPS), defense, np.maximum(offense, defense)),
+        np.where(
+            snaps["position_group"].isin(DEFENSE_GROUPS),
+            defense,
+            np.maximum(offense, defense),
+        ),
     )
     snaps.loc[snaps["snap_share"].gt(1.0), "snap_share"] /= 100.0
     snaps["snap_share"] = snaps["snap_share"].clip(0.0, 1.0)
 
-    # Identity history is global across seasons/teams so traded or signed players
-    # retain prior evidence. Team is intentionally not part of the history key.
     histories: dict[str, list[tuple[int, float]]] = {}
     rows: list[dict[str, object]] = []
     for (season, week), week_rows in snaps.groupby(["season", "week"], sort=True):
+        season = int(season)
+        week = int(week)
         for row in week_rows.itertuples(index=False):
             identity = str(row.player_id) if pd.notna(row.player_id) else _clean_name(row.player)
             history = histories.get(identity, [])
-            same_season = [value for hist_season, value in history if hist_season == int(season)]
+            same_season = [value for hist_season, value in history if hist_season == season]
             if len(same_season) >= minimum_prior_games:
                 value = _weighted_average(same_season, recency_decay)
                 prior_games = len(same_season)
                 value_source = "same_season"
             else:
-                previous = [value for hist_season, value in history if hist_season == int(season) - 1]
+                previous = [
+                    hist_value
+                    for hist_season, hist_value in history
+                    if hist_season == season - 1
+                ]
                 previous = previous[-prior_season_games:] if prior_season_games else []
                 if previous:
                     value = _weighted_average(previous, recency_decay) * prior_season_weight
@@ -111,27 +127,54 @@ def build_pregame_player_values(
                     value = 0.0
                     prior_games = 0
                     value_source = "none"
-            rows.append({
-                "game_id": row.game_id,
-                "season": int(season),
-                "week": int(week),
-                "team": row.team,
-                "player_id": row.player_id,
-                "player_name": row.player,
-                "position_group": row.position_group,
-                "player_value": float(np.clip(value, 0.0, 1.0)),
-                "prior_games": prior_games,
-                "value_source": value_source,
-            })
+
+            postgame_same = same_season + [float(row.snap_share)]
+            postgame_value = _weighted_average(postgame_same, recency_decay)
+            rows.append(
+                {
+                    "game_id": row.game_id,
+                    "season": season,
+                    "week": week,
+                    "team": row.team,
+                    "player_id": row.player_id,
+                    "player_name": row.player,
+                    "position_group": row.position_group,
+                    "player_value": float(np.clip(value, 0.0, 1.0)),
+                    "postgame_player_value": float(np.clip(postgame_value, 0.0, 1.0)),
+                    "prior_games": prior_games,
+                    "value_source": value_source,
+                }
+            )
         for row in week_rows.itertuples(index=False):
             identity = str(row.player_id) if pd.notna(row.player_id) else _clean_name(row.player)
-            histories.setdefault(identity, []).append((int(season), float(row.snap_share)))
+            histories.setdefault(identity, []).append((season, float(row.snap_share)))
     return pd.DataFrame(rows)
 
 
+def _prior_value_lookup(player_values: pd.DataFrame) -> dict[str, list[tuple[int, float]]]:
+    """Index completed-game values for leakage-safe carry-forward lookups."""
+    if "postgame_player_value" not in player_values.columns:
+        return {}
+    lookup: dict[str, list[tuple[int, float]]] = {}
+    for row in player_values.dropna(subset=["player_id"]).itertuples(index=False):
+        key = str(row.player_id)
+        time_key = int(row.season) * 100 + int(row.week)
+        lookup.setdefault(key, []).append((time_key, float(row.postgame_player_value)))
+    for key in lookup:
+        lookup[key].sort()
+    return lookup
+
+
 def attach_player_values(availability: pd.DataFrame, player_values: pd.DataFrame) -> pd.DataFrame:
-    """Join injury rows to pregame values, preferring stable GSIS IDs then names."""
-    required_availability = {"season", "week", "team", "player_name", "position_group", "status"}
+    """Attach pregame values, carrying latest completed usage into missed games."""
+    required_availability = {
+        "season",
+        "week",
+        "team",
+        "player_name",
+        "position_group",
+        "status",
+    }
     missing = required_availability.difference(availability.columns)
     if missing:
         raise ValueError(f"availability missing required columns: {sorted(missing)}")
@@ -158,14 +201,30 @@ def attach_player_values(availability: pd.DataFrame, player_values: pd.DataFrame
         how="left",
     )
 
-    by_name = values[["season", "week", "team", "_clean_name", "player_value"]].drop_duplicates(
-        ["season", "week", "team", "_clean_name"]
-    )
+    by_name = values[
+        ["season", "week", "team", "_clean_name", "player_value"]
+    ].drop_duplicates(["season", "week", "team", "_clean_name"])
     out = out.merge(
         by_name.rename(columns={"player_value": "player_value_name"}),
         on=["season", "week", "team", "_clean_name"],
         how="left",
     )
     out["player_value"] = out["player_value_id"].combine_first(out["player_value_name"])
-    out["player_value"] = pd.to_numeric(out["player_value"], errors="coerce").fillna(0.0).clip(0.0, 1.0)
+
+    # The exact-week join necessarily misses players who are out and therefore
+    # have no snap row. Carry their latest completed-game rolling value forward.
+    prior_lookup = _prior_value_lookup(values)
+    missing_mask = out["player_value"].isna() & out["player_id"].notna()
+    for idx in out.index[missing_mask]:
+        history = prior_lookup.get(str(out.at[idx, "player_id"]), [])
+        if not history:
+            continue
+        target = int(out.at[idx, "season"]) * 100 + int(out.at[idx, "week"])
+        position = bisect.bisect_left(history, (target, -1.0)) - 1
+        if position >= 0:
+            out.at[idx, "player_value"] = history[position][1]
+
+    out["player_value"] = (
+        pd.to_numeric(out["player_value"], errors="coerce").fillna(0.0).clip(0.0, 1.0)
+    )
     return out.drop(columns=["_clean_name", "player_value_id", "player_value_name"])
