@@ -67,7 +67,7 @@ def run() -> None:
     v5_ratings = build_v5_pregame_ratings(team_games)
     frame = _v5_game_frame(games, v5_ratings)
     features = ["epa_gap", "success_gap", "explosive_gap"]
-    usable = frame.dropna(subset=[*features, "home_margin"]).copy()
+    usable = frame.dropna(subset=[*features, "actual_home_margin"]).copy()
 
     train = usable[usable["season"].between(2015, 2022)].copy()
     holdout = usable[usable["season"].between(2023, 2025)].copy()
@@ -77,13 +77,13 @@ def run() -> None:
     alpha_rows = []
     for alpha in [0.0, 0.1, 0.5, 1.0, 2.0, 5.0, 10.0]:
         model = Ridge(alpha=alpha)
-        model.fit(train[features], train["home_margin"])
+        model.fit(train[features], train["actual_home_margin"])
         pred = model.predict(train[features])
-        alpha_rows.append((alpha, float(np.mean(np.abs(pred - train["home_margin"])))))
+        alpha_rows.append((alpha, float(np.mean(np.abs(pred - train["actual_home_margin"])))))
     best_alpha = min(alpha_rows, key=lambda row: row[1])[0]
 
     model = Ridge(alpha=best_alpha)
-    model.fit(train[features], train["home_margin"])
+    model.fit(train[features], train["actual_home_margin"])
     holdout["predicted_home_margin"] = model.predict(holdout[features])
     v5_metrics = evaluate_margin_predictions(holdout)
 
