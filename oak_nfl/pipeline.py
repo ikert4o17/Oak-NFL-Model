@@ -59,3 +59,37 @@ def run_v2_backtest(
     )
     metrics = evaluate_margin_predictions(predictions)
     return predictions, metrics
+
+
+def run_v4_backtest(
+    pbp: pd.DataFrame,
+    *,
+    prior_games: float = 4.0,
+    prior_regression: float = 0.50,
+    recency_decay: float = 0.85,
+    home_field_points: float = 1.5,
+    epa_to_points: float = 26.0,
+) -> tuple[pd.DataFrame, dict[str, float]]:
+    """Run promoted Oak V4 with chronologically calibrated margin conversion.
+
+    V4 retains V2's team-strength model and changes only the EPA-to-points scale.
+    The default 26.0 multiplier was selected on 2015-2022 and validated on an
+    untouched 2023-2025 holdout; home field remains at 1.5 points.
+    """
+    team_games = build_team_game_features(pbp)
+    pregame = build_v2_pregame_ratings(
+        team_games,
+        prior_games=prior_games,
+        prior_regression=prior_regression,
+        recency_decay=recency_decay,
+    )
+    ratings = efficiency_rating_frame(pregame)
+    games = build_game_results(pbp)
+    predictions = build_game_predictions(
+        games,
+        ratings,
+        home_field_points=home_field_points,
+        epa_to_points=epa_to_points,
+    )
+    metrics = evaluate_margin_predictions(predictions)
+    return predictions, metrics
