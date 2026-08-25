@@ -1,4 +1,4 @@
-"""Oak V6 challenger: split passing and rushing EPA while retaining V5 context."""
+"""Oak V6 challenger: test passing/rushing EPA beyond promoted V5."""
 
 from __future__ import annotations
 
@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 
 _METRICS = (
+    "epa_per_play",
     "pass_epa_per_play",
     "rush_epa_per_play",
     "success_rate",
@@ -36,7 +37,7 @@ def build_v6_pregame_ratings(
     prior_regression: float = 0.50,
     recency_decay: float = 0.85,
 ) -> pd.DataFrame:
-    """Build leakage-safe pass/rush offense and defense ratings plus V5 context."""
+    """Build leakage-safe total/pass/rush offense and defense ratings plus V5 context."""
     required = {"game_id", "season", "week", "posteam", "defteam", *_METRICS}
     missing = required.difference(team_games.columns)
     if missing:
@@ -79,7 +80,10 @@ def build_v6_pregame_ratings(
             for game in week_games.itertuples(index=False):
                 for team in (game.posteam, game.defteam):
                     row: dict[str, float | int | str] = {
-                        "season": season, "week": int(week), "game_id": game.game_id, "team": team
+                        "season": season,
+                        "week": int(week),
+                        "game_id": game.game_id,
+                        "team": team,
                     }
                     for metric in _METRICS:
                         off_value, def_value = snapshot[team][metric]
