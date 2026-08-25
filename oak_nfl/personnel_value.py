@@ -42,8 +42,7 @@ def attach_snap_player_ids(snap_counts: pd.DataFrame, players: pd.DataFrame) -> 
         .drop_duplicates("pfr_id")
         .rename(columns={"gsis_id": "player_id", "pfr_id": "pfr_player_id"})
     )
-    out = snap_counts.merge(crosswalk, on="pfr_player_id", how="left", validate="many_to_one")
-    return out
+    return snap_counts.merge(crosswalk, on="pfr_player_id", how="left", validate="many_to_one")
 
 
 def build_pregame_player_values(
@@ -102,17 +101,21 @@ def build_pregame_player_values(
 
 def attach_player_values(availability: pd.DataFrame, player_values: pd.DataFrame) -> pd.DataFrame:
     """Join injury rows to pregame values, preferring stable GSIS IDs then names."""
-    required_availability = {"season", "week", "team", "player_id", "player_name", "position_group", "status"}
+    required_availability = {"season", "week", "team", "player_name", "position_group", "status"}
     missing = required_availability.difference(availability.columns)
     if missing:
         raise ValueError(f"availability missing required columns: {sorted(missing)}")
-    required_values = {"season", "week", "team", "player_id", "player_name", "player_value"}
+    required_values = {"season", "week", "team", "player_name", "player_value"}
     missing_values = required_values.difference(player_values.columns)
     if missing_values:
         raise ValueError(f"player values missing required columns: {sorted(missing_values)}")
 
     out = availability.copy()
     values = player_values.copy()
+    if "player_id" not in out.columns:
+        out["player_id"] = pd.NA
+    if "player_id" not in values.columns:
+        values["player_id"] = pd.NA
     out["_clean_name"] = out["player_name"].map(_clean_name)
     values["_clean_name"] = values["player_name"].map(_clean_name)
 
