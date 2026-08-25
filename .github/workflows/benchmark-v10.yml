@@ -1,0 +1,25 @@
+name: Benchmark V10
+
+on:
+  pull_request:
+    paths:
+      - "oak_nfl/personnel.py"
+      - "oak_nfl/data/injuries.py"
+      - "tests/test_personnel.py"
+      - "tests/test_injuries.py"
+      - "docs/v10-data-plan.md"
+      - ".github/workflows/benchmark-v10.yml"
+  workflow_dispatch:
+
+jobs:
+  validate-framework:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: python -m pip install --upgrade pip && pip install -e ".[dev]"
+      - name: Validate V10 injury/personnel framework
+        run: pytest tests/test_injuries.py tests/test_personnel.py
