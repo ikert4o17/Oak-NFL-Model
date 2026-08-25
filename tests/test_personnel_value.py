@@ -82,6 +82,37 @@ def test_player_history_survives_team_change():
     assert abs(den.player_value - 0.675) < 1e-9
 
 
+def test_out_player_carries_latest_completed_snap_value_forward():
+    snaps = pd.DataFrame(
+        {
+            "game_id": ["g1", "g2"],
+            "season": [2024, 2024],
+            "week": [1, 2],
+            "team": ["KC", "KC"],
+            "player": ["Edge One", "Edge One"],
+            "player_id": ["00-edge", "00-edge"],
+            "position": ["DE", "DE"],
+            "offense_pct": [0.0, 0.0],
+            "defense_pct": [0.80, 0.60],
+        }
+    )
+    values = build_pregame_player_values(snaps)
+    availability = pd.DataFrame(
+        {
+            "season": [2024],
+            "week": [3],
+            "team": ["KC"],
+            "player_id": ["00-edge"],
+            "player_name": ["Edge One"],
+            "position_group": ["EDGE"],
+            "status": ["out"],
+        }
+    )
+    attached = attach_player_values(availability, values)
+    assert attached.loc[0, "player_value"] > 0.0
+    assert abs(attached.loc[0, "player_value"] - values.iloc[-1].postgame_player_value) < 1e-9
+
+
 def test_attach_values_defaults_unknown_player_to_zero():
     availability = pd.DataFrame(
         {
