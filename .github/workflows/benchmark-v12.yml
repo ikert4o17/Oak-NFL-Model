@@ -5,6 +5,7 @@ on:
     paths:
       - "oak_nfl/scoring_efficiency.py"
       - "scripts/run_v12_scoring_efficiency.py"
+      - "scripts/run_v12_clean_scoring.py"
       - "tests/test_scoring_efficiency.py"
       - ".github/workflows/benchmark-v12.yml"
   workflow_dispatch:
@@ -24,3 +25,5 @@ jobs:
         run: pytest tests/test_scoring_efficiency.py
       - name: Run Oak V12 scoring efficiency benchmark
         run: python scripts/run_v12_scoring_efficiency.py
+      - name: Run clean offensive and defensive scoring benchmark
+        run: python scripts/run_v12_clean_scoring.py
