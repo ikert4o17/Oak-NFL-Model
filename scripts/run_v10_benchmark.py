@@ -12,10 +12,14 @@ import pandas as pd
 from oak_nfl.backtest import evaluate_margin_predictions
 from oak_nfl.data.games import build_game_results
 from oak_nfl.data.injuries import latest_weekly_status, normalize_injury_feed
-from oak_nfl.data.nflverse import load_injuries, load_pbp, load_snap_counts
+from oak_nfl.data.nflverse import load_injuries, load_pbp, load_players, load_snap_counts
 from oak_nfl.features import build_team_game_features
 from oak_nfl.personnel import POSITION_POINT_CAPS, player_absence_points
-from oak_nfl.personnel_value import attach_player_values, build_pregame_player_values
+from oak_nfl.personnel_value import (
+    attach_player_values,
+    attach_snap_player_ids,
+    build_pregame_player_values,
+)
 from oak_nfl.ratings.v5 import build_v5_game_predictions, build_v5_pregame_ratings
 
 GROUPS = {
@@ -30,8 +34,6 @@ GROUPS = {
 
 
 def _canonical_injuries(raw: pd.DataFrame) -> pd.DataFrame:
-    # Restrict the first validation pass to explicit game-status designations.
-    # Practice participation alone is not equivalent to game availability.
     data = raw.loc[
         raw["report_status"].notna()
         & raw["report_status"].astype(str).str.strip().ne("")
@@ -72,24 +74,15 @@ def _weekly_team_adjustments(
     return grouped
 
 
-def _apply_weekly_adjustments(
-    predictions: pd.DataFrame,
-    adjustments: pd.DataFrame,
-) -> pd.DataFrame:
+def _apply_weekly_adjustments(predictions: pd.DataFrame, adjustments: pd.DataFrame) -> pd.DataFrame:
     home = adjustments.rename(
         columns={"team": "home_team", "personnel_points": "home_personnel_points"}
     )
     away = adjustments.rename(
         columns={"team": "away_team", "personnel_points": "away_personnel_points"}
     )
-    out = predictions.merge(
-        home,
-        on=["season", "week", "home_team"],
-        how="left",
-    ).merge(
-        away,
-        on=["season", "week", "away_team"],
-        how="left",
+    out = predictions.merge(home, on=["season", "week", "home_team"], how="left").merge(
+        away, on=["season", "week", "away_team"], how="left"
     )
     out[["home_personnel_points", "away_personnel_points"]] = out[
         ["home_personnel_points", "away_personnel_points"]
@@ -106,6 +99,8 @@ def run() -> None:
     pbp = pd.concat([load_pbp(year) for year in range(2014, 2025)], ignore_index=True)
     snaps = pd.concat([load_snap_counts(year) for year in range(2014, 2025)], ignore_index=True)
     injuries = pd.concat([load_injuries(year) for year in range(2014, 2025)], ignore_index=True)
+    players = load_players()
+    snaps = attach_snap_player_ids(snaps, players)
 
     games = build_game_results(pbp)
     v5 = build_v5_game_predictions(games, build_v5_pregame_ratings(build_team_game_features(pbp)))
@@ -113,8 +108,10 @@ def run() -> None:
     availability = attach_player_values(_canonical_injuries(injuries), values)
 
     matched = availability["player_value"].gt(0).mean()
+    id_coverage = availability["player_id"].notna().mean()
     print("=== OAK V10 DATA COVERAGE ===")
     print(f"injury rows: {len(availability)}")
+    print(f"injury rows with GSIS id: {id_coverage:.4f}")
     print(f"rows with prior snap value: {matched:.4f}")
 
     holdout = v5[v5["season"].between(2023, 2024)].dropna(
@@ -128,10 +125,7 @@ def run() -> None:
         for scale in [0.25, 0.50, 0.75, 1.00]:
             for cap in [1.0, 2.0, 3.0]:
                 adjustments = _weekly_team_adjustments(
-                    availability,
-                    positions=positions,
-                    scale=scale,
-                    team_cap=cap,
+                    availability, positions=positions, scale=scale, team_cap=cap
                 )
                 adjusted = _apply_weekly_adjustments(holdout, adjustments)
                 metrics = evaluate_margin_predictions(adjusted)
