@@ -43,6 +43,45 @@ def test_current_week_snap_share_cannot_change_its_own_value():
     assert original_value == changed_value == 0.70
 
 
+def test_prior_season_value_carries_into_week_one_with_discount():
+    snaps = pd.DataFrame(
+        {
+            "game_id": ["old", "new"],
+            "season": [2023, 2024],
+            "week": [18, 1],
+            "team": ["KC", "KC"],
+            "player": ["Veteran Tackle", "Veteran Tackle"],
+            "player_id": ["00-vet", "00-vet"],
+            "position": ["LT", "LT"],
+            "offense_pct": [0.80, 0.50],
+            "defense_pct": [0.0, 0.0],
+        }
+    )
+    values = build_pregame_player_values(snaps, prior_season_weight=0.75)
+    week1 = values.query("season == 2024 and week == 1").iloc[0]
+    assert abs(week1.player_value - 0.60) < 1e-9
+    assert week1.value_source == "prior_season"
+
+
+def test_player_history_survives_team_change():
+    snaps = pd.DataFrame(
+        {
+            "game_id": ["old", "new"],
+            "season": [2023, 2024],
+            "week": [18, 1],
+            "team": ["KC", "DEN"],
+            "player": ["Veteran Edge", "Veteran Edge"],
+            "player_id": ["00-edge", "00-edge"],
+            "position": ["DE", "DE"],
+            "offense_pct": [0.0, 0.0],
+            "defense_pct": [0.90, 0.50],
+        }
+    )
+    values = build_pregame_player_values(snaps, prior_season_weight=0.75)
+    den = values.query("season == 2024 and team == 'DEN'").iloc[0]
+    assert abs(den.player_value - 0.675) < 1e-9
+
+
 def test_attach_values_defaults_unknown_player_to_zero():
     availability = pd.DataFrame(
         {
