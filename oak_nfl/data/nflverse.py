@@ -26,6 +26,18 @@ def roster_url(season: int) -> str:
     return f"{NFLVERSE_RELEASE_BASE}/rosters/roster_{season}.parquet"
 
 
+def injury_url(season: int) -> str:
+    """Return the nflverse parquet URL for a season of injury reports."""
+    _validate_season(season, minimum=2009)
+    return f"{NFLVERSE_RELEASE_BASE}/injuries/injuries_{season}.parquet"
+
+
+def snap_counts_url(season: int) -> str:
+    """Return the nflverse parquet URL for a season of PFR snap counts."""
+    _validate_season(season, minimum=2012)
+    return f"{NFLVERSE_RELEASE_BASE}/snap_counts/snap_counts_{season}.parquet"
+
+
 def download_file(url: str, destination: str | Path, *, timeout: int = 120) -> Path:
     """Download a remote file atomically enough for local pipeline use."""
     destination = Path(destination)
@@ -43,20 +55,36 @@ def download_file(url: str, destination: str | Path, *, timeout: int = 120) -> P
     return destination
 
 
+def _load_parquet(url: str, path: Path) -> pd.DataFrame:
+    if not path.exists():
+        download_file(url, path)
+    return pd.read_parquet(path)
+
+
 def load_pbp(season: int, cache_dir: str | Path = "data/raw/pbp") -> pd.DataFrame:
     """Load a season of nflverse play-by-play data, downloading it if necessary."""
     path = Path(cache_dir) / f"play_by_play_{season}.parquet"
-    if not path.exists():
-        download_file(pbp_url(season), path)
-    return pd.read_parquet(path)
+    return _load_parquet(pbp_url(season), path)
 
 
 def load_roster(season: int, cache_dir: str | Path = "data/raw/rosters") -> pd.DataFrame:
     """Load a season of nflverse roster data, downloading it if necessary."""
     path = Path(cache_dir) / f"roster_{season}.parquet"
-    if not path.exists():
-        download_file(roster_url(season), path)
-    return pd.read_parquet(path)
+    return _load_parquet(roster_url(season), path)
+
+
+def load_injuries(season: int, cache_dir: str | Path = "data/raw/injuries") -> pd.DataFrame:
+    """Load historical nflverse injury/practice reports (available since 2009)."""
+    path = Path(cache_dir) / f"injuries_{season}.parquet"
+    return _load_parquet(injury_url(season), path)
+
+
+def load_snap_counts(
+    season: int, cache_dir: str | Path = "data/raw/snap_counts"
+) -> pd.DataFrame:
+    """Load PFR game-level snap counts from nflverse (available since 2012)."""
+    path = Path(cache_dir) / f"snap_counts_{season}.parquet"
+    return _load_parquet(snap_counts_url(season), path)
 
 
 def _validate_season(season: int, *, minimum: int) -> None:
