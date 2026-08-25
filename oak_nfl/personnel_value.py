@@ -50,7 +50,16 @@ def build_pregame_player_values(
     *,
     recency_decay: float = 0.90,
     minimum_prior_games: int = 1,
+    prior_season_games: int = 8,
+    prior_season_weight: float = 0.75,
 ) -> pd.DataFrame:
+    """Build leakage-safe player values using all earlier games, including prior seasons.
+
+    Same-season history is preferred. At a season boundary, up to the final
+    ``prior_season_games`` from the previous season are carried forward and
+    discounted by ``prior_season_weight``. This gives established starters a
+    sensible Week 1 value without using any information from the current game.
+    """
     required = {
         "game_id", "season", "week", "team", "player", "position", "offense_pct", "defense_pct"
     }
@@ -59,6 +68,10 @@ def build_pregame_player_values(
         raise ValueError(f"snap counts missing required columns: {sorted(missing)}")
     if not 0 < recency_decay <= 1:
         raise ValueError("recency_decay must be in (0, 1]")
+    if prior_season_games < 0:
+        raise ValueError("prior_season_games must be non-negative")
+    if not 0 <= prior_season_weight <= 1:
+        raise ValueError("prior_season_weight must be in [0, 1]")
 
     snaps = snap_counts.sort_values(["season", "week", "game_id", "team", "player"]).copy()
     if "player_id" not in snaps.columns:
@@ -74,14 +87,30 @@ def build_pregame_player_values(
     snaps.loc[snaps["snap_share"].gt(1.0), "snap_share"] /= 100.0
     snaps["snap_share"] = snaps["snap_share"].clip(0.0, 1.0)
 
-    histories: dict[tuple[str, str], list[float]] = {}
+    # Identity history is global across seasons/teams so traded or signed players
+    # retain prior evidence. Team is intentionally not part of the history key.
+    histories: dict[str, list[tuple[int, float]]] = {}
     rows: list[dict[str, object]] = []
     for (season, week), week_rows in snaps.groupby(["season", "week"], sort=True):
         for row in week_rows.itertuples(index=False):
             identity = str(row.player_id) if pd.notna(row.player_id) else _clean_name(row.player)
-            key = (str(row.team), identity)
-            history = histories.get(key, [])
-            value = _weighted_average(history, recency_decay) if len(history) >= minimum_prior_games else 0.0
+            history = histories.get(identity, [])
+            same_season = [value for hist_season, value in history if hist_season == int(season)]
+            if len(same_season) >= minimum_prior_games:
+                value = _weighted_average(same_season, recency_decay)
+                prior_games = len(same_season)
+                value_source = "same_season"
+            else:
+                previous = [value for hist_season, value in history if hist_season == int(season) - 1]
+                previous = previous[-prior_season_games:] if prior_season_games else []
+                if previous:
+                    value = _weighted_average(previous, recency_decay) * prior_season_weight
+                    prior_games = len(previous)
+                    value_source = "prior_season"
+                else:
+                    value = 0.0
+                    prior_games = 0
+                    value_source = "none"
             rows.append({
                 "game_id": row.game_id,
                 "season": int(season),
@@ -91,11 +120,12 @@ def build_pregame_player_values(
                 "player_name": row.player,
                 "position_group": row.position_group,
                 "player_value": float(np.clip(value, 0.0, 1.0)),
-                "prior_games": len(history),
+                "prior_games": prior_games,
+                "value_source": value_source,
             })
         for row in week_rows.itertuples(index=False):
             identity = str(row.player_id) if pd.notna(row.player_id) else _clean_name(row.player)
-            histories.setdefault((str(row.team), identity), []).append(float(row.snap_share))
+            histories.setdefault(identity, []).append((int(season), float(row.snap_share)))
     return pd.DataFrame(rows)
 
 
