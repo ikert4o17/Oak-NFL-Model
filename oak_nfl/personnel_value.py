@@ -160,8 +160,8 @@ def _prior_value_lookup(player_values: pd.DataFrame) -> dict[str, list[tuple[int
         key = str(row.player_id)
         time_key = int(row.season) * 100 + int(row.week)
         lookup.setdefault(key, []).append((time_key, float(row.postgame_player_value)))
-    for key in lookup:
-        lookup[key].sort()
+    for history in lookup.values():
+        history.sort()
     return lookup
 
 
@@ -211,8 +211,6 @@ def attach_player_values(availability: pd.DataFrame, player_values: pd.DataFrame
     )
     out["player_value"] = out["player_value_id"].combine_first(out["player_value_name"])
 
-    # The exact-week join necessarily misses players who are out and therefore
-    # have no snap row. Carry their latest completed-game rolling value forward.
     prior_lookup = _prior_value_lookup(values)
     missing_mask = out["player_value"].isna() & out["player_id"].notna()
     for idx in out.index[missing_mask]:
