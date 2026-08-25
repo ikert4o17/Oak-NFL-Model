@@ -6,6 +6,7 @@ on:
       - "oak_nfl/weather.py"
       - "oak_nfl/data/nflverse.py"
       - "scripts/run_v11_weather_analysis.py"
+      - "scripts/run_v11_wind_style.py"
       - "tests/test_weather.py"
       - "docs/v11-weather-plan.md"
       - ".github/workflows/benchmark-v11.yml"
@@ -14,7 +15,7 @@ on:
 jobs:
   benchmark:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -26,3 +27,5 @@ jobs:
         run: pytest tests/test_weather.py
       - name: Run Oak V11 weather/acclimation diagnostic
         run: python scripts/run_v11_weather_analysis.py
+      - name: Run Oak V11 wind x offensive style diagnostic
+        run: python scripts/run_v11_wind_style.py
