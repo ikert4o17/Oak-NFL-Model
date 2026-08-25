@@ -30,20 +30,19 @@ GROUPS = {
 
 
 def _canonical_injuries(raw: pd.DataFrame) -> pd.DataFrame:
-    data = raw.copy()
-    # Game designation is the best direct pregame availability signal. When it
-    # is missing, retain practice participation rather than inventing an injury.
-    data["oak_status"] = data["report_status"].where(
-        data["report_status"].notna() & data["report_status"].astype(str).str.len().gt(0),
-        data["practice_status"],
-    )
+    # Restrict the first validation pass to explicit game-status designations.
+    # Practice participation alone is not equivalent to game availability.
+    data = raw.loc[
+        raw["report_status"].notna()
+        & raw["report_status"].astype(str).str.strip().ne("")
+    ].copy()
     normalized = normalize_injury_feed(
         data,
         column_map={
             "gsis_id": "player_id",
             "full_name": "player_name",
             "position": "position_group",
-            "oak_status": "status",
+            "report_status": "status",
             "date_modified": "report_date",
         },
         source="nflverse_injuries",
