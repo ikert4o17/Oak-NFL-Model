@@ -10,6 +10,7 @@ on:
       - "scripts/run_v12_under_signal_analysis.py"
       - "scripts/run_v12_grade_validation.py"
       - "scripts/run_v12_directional_grade_validation.py"
+      - "scripts/run_v12_over_sweet_spot_analysis.py"
       - "oak_nfl/**"
       - ".github/workflows/benchmark-v1.yml"
   workflow_dispatch:
@@ -51,3 +52,6 @@ jobs:
 
       - name: Run V12 direction-aware grade validation
         run: python scripts/run_v12_directional_grade_validation.py
+
+      - name: Run V12 over sweet spot analysis
+        run: python scripts/run_v12_over_sweet_spot_analysis.py
