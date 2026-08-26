@@ -1,0 +1,22 @@
+name: Benchmark V12 Locked Validation
+
+on:
+  pull_request:
+    paths:
+      - "scripts/run_v12_locked_validation.py"
+      - ".github/workflows/benchmark-v12-locked-validation.yml"
+  workflow_dispatch:
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: python -m pip install --upgrade pip && pip install -e ".[dev]"
+      - name: Run locked V12 expanding walk-forward and environment validation
+        run: python scripts/run_v12_locked_validation.py
