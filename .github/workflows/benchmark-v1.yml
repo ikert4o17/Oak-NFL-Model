@@ -4,7 +4,7 @@ on:
   pull_request:
     paths:
       - "scripts/run_v1_benchmark.py"
-      - "scripts/run_v12_pace_validation.py"
+      - "scripts/run_v12_weather_validation.py"
       - "oak_nfl/**"
       - ".github/workflows/benchmark-v1.yml"
   workflow_dispatch:
@@ -29,5 +29,5 @@ jobs:
       - name: Run Oak Baseline V1 benchmark
         run: python scripts/run_v1_benchmark.py
 
-      - name: Run V12 pace validation
-        run: python scripts/run_v12_pace_validation.py
+      - name: Run V12 weather validation
+        run: python scripts/run_v12_weather_validation.py
