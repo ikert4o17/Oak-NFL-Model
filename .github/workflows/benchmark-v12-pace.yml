@@ -1,10 +1,6 @@
 name: Benchmark V12 Pace
 
 on:
-  pull_request:
-    paths:
-      - "scripts/run_v12_pace_validation.py"
-      - ".github/workflows/benchmark-v12-pace.yml"
   workflow_dispatch:
 
 jobs:
