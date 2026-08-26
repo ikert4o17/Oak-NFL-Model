@@ -6,7 +6,15 @@ from oak_nfl.features import build_team_game_features, build_team_weekly_ratings
 from run_v12_incremental import START,HOLDOUT_END,TRAIN_END,HOLDOUT_START,prepare,model,metrics
 
 def cols(core, names):
-    return [f"{s}_{c}" for s in ["home","away"] for c in core if any(c.endswith(f"_{n}") for n in names)]
+    # Core names are pregame_{off,def}_<metric>. Match the metric exactly so
+    # epa_per_play does not accidentally include pass_epa_per_play/rush_epa_per_play.
+    wanted=set(names)
+    matched=[]
+    for c in core:
+        metric=c.removeprefix("pregame_off_").removeprefix("pregame_def_")
+        if metric in wanted:
+            matched.extend([f"home_{c}",f"away_{c}"])
+    return matched
 
 def run():
     pbp=pd.concat([load_pbp(y) for y in range(START,HOLDOUT_END+1)],ignore_index=True); g=prepare(pbp)
@@ -26,6 +34,10 @@ def run():
       "SCORE_EPA_PASS_EXP":score+epa+pas+exp,
       "SCORE_EPA_PASS_SUCCESS":score+epa+pas+suc,
     }
+    # Guard against future selector regressions before fitting.
+    for name, selected in sets.items():
+        if len(selected) != len(set(selected)):
+            raise ValueError(f"Duplicate feature columns in {name}: {selected}")
     tr=g[g.season.le(TRAIN_END)].dropna(subset=["actual_total","total_line"]); ho=g[g.season.between(HOLDOUT_START,HOLDOUT_END)].dropna(subset=["actual_total","total_line"])
     market=metrics(ho.actual_total,ho.total_line); print("=== V12 FOCUSED CORE SHOOTOUT ==="); print("MARKET",market)
     rows=[]
