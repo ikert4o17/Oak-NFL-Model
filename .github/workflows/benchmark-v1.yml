@@ -11,6 +11,7 @@ on:
       - "scripts/run_v12_grade_validation.py"
       - "scripts/run_v12_directional_grade_validation.py"
       - "scripts/run_v12_over_sweet_spot_analysis.py"
+      - "scripts/run_v12_overreaction_analysis.py"
       - "oak_nfl/**"
       - ".github/workflows/benchmark-v1.yml"
   workflow_dispatch:
@@ -55,3 +56,6 @@ jobs:
 
       - name: Run V12 over sweet spot analysis
         run: python scripts/run_v12_over_sweet_spot_analysis.py
+
+      - name: Run V12 market overreaction analysis
+        run: python scripts/run_v12_overreaction_analysis.py
