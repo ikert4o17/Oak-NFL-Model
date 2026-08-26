@@ -7,6 +7,7 @@ on:
       - "scripts/run_v12_scoring_efficiency.py"
       - "scripts/run_v12_clean_scoring.py"
       - "scripts/run_v12_incremental.py"
+      - "scripts/run_v12_ablation.py"
       - "tests/test_scoring_efficiency.py"
       - ".github/workflows/benchmark-v12.yml"
   workflow_dispatch:
@@ -30,3 +31,5 @@ jobs:
         run: python scripts/run_v12_clean_scoring.py
       - name: Test incremental value versus core efficiency
         run: python scripts/run_v12_incremental.py
+      - name: Run V12 feature-family ablation tournament
+        run: python scripts/run_v12_ablation.py
