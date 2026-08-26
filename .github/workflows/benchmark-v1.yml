@@ -6,6 +6,7 @@ on:
       - "scripts/run_v1_benchmark.py"
       - "scripts/run_v12_weather_validation.py"
       - "scripts/run_v12_integration_phase2.py"
+      - "scripts/run_v12_edge_validation.py"
       - "oak_nfl/**"
       - ".github/workflows/benchmark-v1.yml"
   workflow_dispatch:
@@ -35,3 +36,6 @@ jobs:
 
       - name: Run V12 integration phase 2
         run: python scripts/run_v12_integration_phase2.py
+
+      - name: Run V12 integrated edge validation
+        run: python scripts/run_v12_edge_validation.py
