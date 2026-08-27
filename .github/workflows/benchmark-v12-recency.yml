@@ -1,0 +1,22 @@
+name: Benchmark V12 Recency Weighting
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/run_v12_recency_weighting.py'
+      - '.github/workflows/benchmark-v12-recency.yml'
+  workflow_dispatch:
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+      - name: Install package
+        run: python -m pip install --upgrade pip && pip install -e ".[dev]"
+      - name: Run V12 recency weighting experiment
+        run: python scripts/run_v12_recency_weighting.py
