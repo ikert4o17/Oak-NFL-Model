@@ -16,13 +16,11 @@ TEST_SEASONS=range(2019,2026)
 
 def build_drive_games(pbp):
     p=pbp.copy()
-    need={"game_id","season","week","posteam","defteam","drive","drive_result","fixed_drive_result"}
+    need={"game_id","season","week","posteam","defteam","drive","fixed_drive_result"}
     missing=need-set(p.columns)
     if missing: raise ValueError(f"PBP missing drive columns: {sorted(missing)}")
     p=p[p.posteam.notna() & p.defteam.notna() & p.drive.notna()].copy()
-    # One row per offensive drive. Prefer nflverse fixed result when available.
-    result=p["fixed_drive_result"].fillna(p["drive_result"]).astype(str)
-    p["_result"]=result
+    p["_result"]=p["fixed_drive_result"].fillna("").astype(str)
     d=(p.sort_values(["game_id","posteam","drive"]).groupby(["game_id","season","week","posteam","defteam","drive"],as_index=False).agg(result=("_result","last")))
     r=d.result.str.lower()
     d["points"] = np.select([r.str.contains("touchdown",na=False),r.str.contains("field goal",na=False),r.str.contains("safety",na=False)],[7.0,3.0,2.0],default=0.0)
