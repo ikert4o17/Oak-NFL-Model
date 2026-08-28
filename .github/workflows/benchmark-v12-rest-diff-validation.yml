@@ -1,0 +1,23 @@
+name: Benchmark V12 Rest Differential Validation
+
+on:
+  pull_request:
+    paths:
+      - "scripts/run_v12_rest_diff_validation.py"
+      - "scripts/run_v12_schedule_context.py"
+      - ".github/workflows/benchmark-v12-rest-diff-validation.yml"
+  workflow_dispatch:
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install package
+        run: python -m pip install --upgrade pip && pip install -e ".[dev]"
+      - name: Run frozen rest differential validation
+        run: python scripts/run_v12_rest_diff_validation.py
