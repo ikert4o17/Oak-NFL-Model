@@ -1,0 +1,22 @@
+name: Benchmark V12 Schedule Context
+
+on:
+  pull_request:
+    paths:
+      - "scripts/run_v12_schedule_context.py"
+      - ".github/workflows/benchmark-v12-schedule-context.yml"
+  workflow_dispatch:
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install package
+        run: python -m pip install --upgrade pip && pip install -e ".[dev]"
+      - name: Run V12 schedule context experiment
+        run: python scripts/run_v12_schedule_context.py
