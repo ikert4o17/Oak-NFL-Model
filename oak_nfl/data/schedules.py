@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from pathlib import Path
 
 import pandas as pd
@@ -49,7 +49,7 @@ def load_next_slate(
     if missing:
         raise ValueError(f"schedule data missing required columns: {sorted(missing)}")
 
-    current_date = datetime.now(timezone.utc).date()
+    current_date = datetime.now(UTC).date()
     cutoff = pd.Timestamp(as_of or current_date)
     games["game_date"] = pd.to_datetime(games["gameday"], errors="coerce")
     future = games[games["game_date"].ge(cutoff)].copy()
