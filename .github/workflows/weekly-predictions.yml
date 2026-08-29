@@ -4,6 +4,14 @@ on:
   workflow_dispatch:
   schedule:
     - cron: "0 14 * * 2"
+  pull_request:
+    paths:
+      - "oak_nfl/production.py"
+      - "oak_nfl/totals_v12.py"
+      - "oak_nfl/weekly.py"
+      - "oak_nfl/data/schedules.py"
+      - "scripts/run_weekly_predictions.py"
+      - ".github/workflows/weekly-predictions.yml"
 
 jobs:
   predict:
