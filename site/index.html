@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#0b1510">
+  <title>Oak NFL Model</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="hero">
+    <div class="brand"><span class="mark">OAK</span><span>NFL MODEL</span></div>
+    <h1>Weekly NFL projections,<br>without the noise.</h1>
+    <p>Oak's production spread and totals models against the current market.</p>
+    <div class="meta"><span id="week-label">Loading slate…</span><span id="updated-label"></span></div>
+  </header>
+
+  <main>
+    <section class="summary">
+      <div><span>Games</span><strong id="game-count">—</strong></div>
+      <div><span>Top spread edge</span><strong id="top-spread">—</strong></div>
+      <div><span>Top total edge</span><strong id="top-total">—</strong></div>
+    </section>
+
+    <section class="controls" aria-label="Prediction filters">
+      <button class="active" data-filter="all">All games</button>
+      <button data-filter="spread">Spread edges</button>
+      <button data-filter="total">Total edges</button>
+      <select id="sort" aria-label="Sort games">
+        <option value="time">Game order</option>
+        <option value="spread">Largest spread edge</option>
+        <option value="total">Largest total edge</option>
+      </select>
+    </section>
+
+    <section id="games" class="games" aria-live="polite"></section>
+    <p id="empty" class="empty" hidden>No prediction data is available yet.</p>
+
+    <section class="about">
+      <h2>What you're looking at</h2>
+      <p><strong>Oak Spread</strong> is the model's projected home margin. <strong>Oak Total</strong> is the projected combined score. Edge is the difference between Oak and the listed market number. Larger absolute edges indicate greater disagreement—not a guarantee of an outcome.</p>
+      <p class="model-note">Production: V5 spread core · V12 totals core · Pregame-only inputs</p>
+    </section>
+  </main>
+
+  <footer>Oak NFL Model · Built for weekly decision support</footer>
+  <script src="app.js"></script>
+</body>
+</html>
