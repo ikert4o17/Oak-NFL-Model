@@ -11,6 +11,7 @@ on:
       - "oak_nfl/weekly.py"
       - "oak_nfl/data/schedules.py"
       - "scripts/run_weekly_predictions.py"
+      - "scripts/build_dashboard_data.py"
       - ".github/workflows/weekly-predictions.yml"
 
 jobs:
@@ -32,9 +33,16 @@ jobs:
       - name: Generate next weekly card
         run: python scripts/run_weekly_predictions.py --auto --refresh-schedule
 
+      - name: Build dashboard data
+        run: |
+          latest=$(ls -t data/predictions/oak_*.csv | head -1)
+          python scripts/build_dashboard_data.py "$latest"
+
       - name: Upload weekly card
         uses: actions/upload-artifact@v4
         with:
           name: oak-weekly-predictions
-          path: data/predictions/*.csv
+          path: |
+            data/predictions/*.csv
+            site/data/latest.json
           if-no-files-found: error
