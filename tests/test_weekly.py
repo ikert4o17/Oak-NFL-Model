@@ -1,6 +1,6 @@
 import pandas as pd
 
-import oak_nfl.weekly as weekly
+from oak_nfl import weekly
 
 
 def test_run_weekly_predictions_combines_spread_and_total_models(monkeypatch) -> None:
