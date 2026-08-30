@@ -12,16 +12,29 @@ from oak_nfl.data.nflverse import download_file
 SCHEDULE_URL = "https://github.com/nflverse/nflverse-data/releases/download/schedules/games.csv"
 
 
+def _normalize_market_lines(games: pd.DataFrame) -> pd.DataFrame:
+    """Convert nflverse spread lines to standard sportsbook sign convention.
+
+    nflverse stores ``spread_line`` as the number of points the home team is
+    favored by, so home favorites are positive. Oak's production layer uses the
+    conventional sportsbook representation where home favorites are negative.
+    """
+    out = games.copy()
+    if "spread_line" in out.columns:
+        out["spread_line"] = -pd.to_numeric(out["spread_line"], errors="coerce")
+    return out
+
+
 def load_schedules(
     cache_path: str | Path = "data/raw/schedules/games.csv",
     *,
     refresh: bool = False,
 ) -> pd.DataFrame:
-    """Load nflverse's schedule file, including future games and market fields."""
+    """Load nflverse schedules with market lines normalized for Oak."""
     path = Path(cache_path)
     if refresh or not path.exists():
         download_file(SCHEDULE_URL, path)
-    return pd.read_csv(path, low_memory=False)
+    return _normalize_market_lines(pd.read_csv(path, low_memory=False))
 
 
 def load_week(season: int, week: int, *, refresh: bool = False) -> pd.DataFrame:
