@@ -5,7 +5,12 @@ on:
     branches: [main]
     paths:
       - "site/**"
+      - "oak_nfl/**"
+      - "scripts/run_weekly_predictions.py"
+      - "scripts/build_dashboard_data.py"
       - ".github/workflows/pages.yml"
+  schedule:
+    - cron: "30 14 * * 2"
   workflow_dispatch:
 
 permissions:
@@ -26,12 +31,32 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install package
+        run: python -m pip install --upgrade pip && pip install -e ".[dev]"
+
+      - name: Generate current weekly card
+        run: python scripts/run_weekly_predictions.py --auto --refresh-schedule
+
+      - name: Build dashboard data
+        run: |
+          latest=$(ls -t data/predictions/oak_*.csv | head -1)
+          python scripts/build_dashboard_data.py "$latest"
+
       - name: Configure Pages
         uses: actions/configure-pages@v5
+
       - name: Upload site
         uses: actions/upload-pages-artifact@v4
         with:
           path: site
+
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
