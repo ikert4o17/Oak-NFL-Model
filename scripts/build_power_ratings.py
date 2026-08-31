@@ -11,6 +11,7 @@ import numpy as np
 import pandas as pd
 
 from oak_nfl.data.nflverse import load_pbp
+from oak_nfl.data.schedules import load_schedules
 from oak_nfl.features import build_team_game_features
 from oak_nfl.power import build_power_ratings
 from oak_nfl.ratings.v5 import build_v5_pregame_ratings
@@ -29,8 +30,7 @@ def _load_history(season: int, start: int = 2014) -> pd.DataFrame:
     return pd.concat(frames, ignore_index=True)
 
 
-def _snapshot(team_games: pd.DataFrame, season: int, week: int) -> pd.DataFrame:
-    teams = sorted(set(team_games["posteam"].dropna()) | set(team_games["defteam"].dropna()))
+def _snapshot(team_games: pd.DataFrame, teams: list[str], season: int, week: int) -> pd.DataFrame:
     metric_cols = [c for c in team_games.columns if c not in {"game_id", "season", "week", "posteam", "defteam"}]
     dummies = []
     for team in teams:
@@ -38,7 +38,7 @@ def _snapshot(team_games: pd.DataFrame, season: int, week: int) -> pd.DataFrame:
         row.update({c: np.nan for c in metric_cols})
         dummies.append(row)
     ratings = build_v5_pregame_ratings(pd.concat([team_games, pd.DataFrame(dummies)], ignore_index=True))
-    return ratings.loc[(ratings["season"].eq(season)) & (ratings["week"].eq(week))].drop_duplicates("team")
+    return ratings.loc[(ratings["season"].eq(season)) & (ratings["week"].eq(week)) & ratings["team"].isin(teams)].drop_duplicates("team")
 
 
 def main() -> None:
@@ -50,11 +50,15 @@ def main() -> None:
 
     pbp = _load_history(args.season)
     team_games = build_team_game_features(pbp)
-    current = build_power_ratings(_snapshot(team_games, args.season, args.week))
+    schedule = load_schedules()
+    season_schedule = schedule.loc[schedule["season"].eq(args.season)]
+    teams = sorted(set(season_schedule["home_team"].dropna()) | set(season_schedule["away_team"].dropna()))
+    if len(teams) != 32:
+        raise RuntimeError(f"expected 32 current NFL teams, found {len(teams)}")
 
-    previous = None
+    current = build_power_ratings(_snapshot(team_games, teams, args.season, args.week))
     if args.week > 1:
-        previous = build_power_ratings(_snapshot(team_games, args.season, args.week - 1))[["team", "rank"]].rename(columns={"rank": "previous_rank"})
+        previous = build_power_ratings(_snapshot(team_games, teams, args.season, args.week - 1))[["team", "rank"]].rename(columns={"rank": "previous_rank"})
         current = current.merge(previous, on="team", how="left")
     else:
         current["previous_rank"] = np.nan
@@ -63,12 +67,9 @@ def main() -> None:
     rows = []
     for row in current.itertuples(index=False):
         rows.append({
-            "rank": int(row.rank),
-            "team": row.team,
-            "rating": round(float(row.rating), 2),
+            "rank": int(row.rank), "team": row.team, "rating": round(float(row.rating), 2),
             "movement": None if pd.isna(row.movement) else int(row.movement),
-            "epa_points": round(float(row.epa_points), 2),
-            "success_points": round(float(row.success_points), 2),
+            "epa_points": round(float(row.epa_points), 2), "success_points": round(float(row.success_points), 2),
             "explosive_points": round(float(row.explosive_points), 2),
         })
     payload = {"season": args.season, "week": args.week, "generated_at": datetime.now(timezone.utc).isoformat(), "teams": rows}
