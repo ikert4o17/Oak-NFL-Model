@@ -8,6 +8,7 @@ on:
       - "oak_nfl/**"
       - "scripts/run_weekly_predictions.py"
       - "scripts/build_dashboard_data.py"
+      - "scripts/build_power_ratings.py"
       - ".github/workflows/pages.yml"
   schedule:
     - cron: "30 14 * * 2"
@@ -44,10 +45,13 @@ jobs:
       - name: Generate current weekly card
         run: python scripts/run_weekly_predictions.py --auto --refresh-schedule
 
-      - name: Build dashboard data
+      - name: Build dashboard data and power ratings
         run: |
           latest=$(ls -t data/predictions/oak_*.csv | head -1)
           python scripts/build_dashboard_data.py "$latest"
+          season=$(basename "$latest" | sed -E 's/oak_([0-9]+)_week_([0-9]+)\.csv/\1/')
+          week=$(basename "$latest" | sed -E 's/oak_([0-9]+)_week_([0-9]+)\.csv/\2/')
+          python scripts/build_power_ratings.py --season "$season" --week "$week"
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
