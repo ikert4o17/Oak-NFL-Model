@@ -1,11 +1,12 @@
 import pandas as pd
+import requests
 
 from oak_nfl.data.weather import fetch_slate_weather
 
 
 class BrokenSession:
     def get(self, url, params=None, timeout=None):
-        raise RuntimeError("provider unavailable")
+        raise requests.RequestException("provider unavailable")
 
 
 def test_provider_failure_does_not_create_weather_points():
