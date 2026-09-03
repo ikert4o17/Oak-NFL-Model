@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 
-from oak_nfl.data.injuries import latest_weekly_status, normalize_injury_feed
+from oak_nfl.data.injuries import latest_weekly_status, normalize_injury_feed, normalize_status
 
 
 def test_normalize_injury_feed_maps_provider_columns_and_positions():
@@ -34,6 +34,11 @@ def test_normalize_injury_feed_maps_provider_columns_and_positions():
     assert row.position_group == "OT"
     assert row.status == "limited"
     assert row.source == "test"
+
+
+def test_unknown_status_never_becomes_active():
+    assert normalize_status("game-time decision") == "unknown"
+    assert normalize_status(None) == "unknown"
 
 
 def test_latest_weekly_status_keeps_latest_report():
