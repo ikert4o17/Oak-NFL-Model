@@ -33,7 +33,17 @@ def grade_predictions(predictions: pd.DataFrame, finals: pd.DataFrame) -> pd.Dat
     for col in ("closing_spread_line", "closing_total_line"):
         if col in finals:
             cols.append(col)
-    out = predictions.merge(finals[cols], on="game_id", how="left")
+
+    result_cols = [
+        "home_score",
+        "away_score",
+        "closing_spread_line",
+        "closing_total_line",
+    ]
+    clean_predictions = predictions.drop(
+        columns=[col for col in result_cols if col in predictions.columns]
+    )
+    out = clean_predictions.merge(finals[cols], on="game_id", how="left")
     if "closing_spread_line" not in out:
         out["closing_spread_line"] = np.nan
     if "closing_total_line" not in out:

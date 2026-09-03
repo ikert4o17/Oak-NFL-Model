@@ -38,6 +38,41 @@ def test_grade_predictions_uses_closing_lines():
     assert out.spread_line == -2.5
 
 
+def test_grade_predictions_replaces_schedule_score_columns():
+    pred = pd.DataFrame(
+        [
+            {
+                "game_id": "g1",
+                "season": 2026,
+                "week": 1,
+                "home_team": "A",
+                "away_team": "B",
+                "predicted_home_margin": 4.0,
+                "predicted_total": 48.0,
+                "home_score": None,
+                "away_score": None,
+            }
+        ]
+    )
+    finals = pd.DataFrame(
+        [
+            {
+                "game_id": "g1",
+                "home_score": 27,
+                "away_score": 20,
+                "closing_spread_line": -3.5,
+                "closing_total_line": 46.5,
+            }
+        ]
+    )
+
+    out = grade_predictions(pred, finals).iloc[0]
+
+    assert out.home_score == 27
+    assert out.away_score == 20
+    assert out.final_home_margin == 7
+
+
 def test_weekly_summary_tracks_pushes():
     graded = pd.DataFrame(
         [
