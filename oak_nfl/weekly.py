@@ -61,8 +61,24 @@ def run_weekly_predictions(
 
     totals = predict_v12_totals(pbp, slate)
     out = slate.copy()
+    qb_context_prefixes = (
+        "home_qb_",
+        "away_qb_",
+        "home_expected_qb_",
+        "away_expected_qb_",
+        "home_baseline_qb_",
+        "away_baseline_qb_",
+        "home_depth_chart_",
+        "away_depth_chart_",
+    )
+    spread_context = [
+        c
+        for c in spread.columns
+        if c != "game_id"
+        and (c == "predicted_home_margin" or c.startswith(qb_context_prefixes))
+    ]
     out = out.merge(
-        spread[["game_id", "predicted_home_margin"]], on="game_id", how="left", validate="one_to_one"
+        spread[["game_id", *spread_context]], on="game_id", how="left", validate="one_to_one"
     )
     out = out.merge(
         totals[["game_id", "predicted_total"]], on="game_id", how="left", validate="one_to_one"

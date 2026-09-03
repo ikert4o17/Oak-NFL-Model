@@ -3,12 +3,16 @@ name: Weekly Oak Predictions
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 14 * * 2"
+    - cron: "0 14 * * *"
   pull_request:
     paths:
       - "oak_nfl/production.py"
       - "oak_nfl/totals_v12.py"
       - "oak_nfl/weekly.py"
+      - "oak_nfl/live_qb.py"
+      - "oak_nfl/qb.py"
+      - "oak_nfl/qb_adjustment.py"
+      - "oak_nfl/data/depth_charts.py"
       - "oak_nfl/data/schedules.py"
       - "oak_nfl/results.py"
       - "scripts/run_weekly_predictions.py"
@@ -35,8 +39,8 @@ jobs:
       - name: Install package
         run: python -m pip install --upgrade pip && pip install -e ".[dev]"
 
-      - name: Generate or reuse frozen weekly card
-        run: python scripts/run_weekly_predictions.py --auto --refresh-schedule --freeze
+      - name: Refresh live QB context and generate or reuse frozen weekly card
+        run: python scripts/run_weekly_predictions.py --auto --refresh-schedule --live-qb --freeze
 
       - name: Refresh closing-line results
         run: python scripts/refresh_results.py --refresh-schedule
@@ -46,23 +50,25 @@ jobs:
           latest=$(ls -t data/predictions/oak_*.csv | head -1)
           python scripts/build_dashboard_data.py "$latest"
 
-      - name: Persist frozen card and results
+      - name: Persist frozen card, live context, previews, and results
         if: github.event_name != 'pull_request'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/predictions/ data/results/ site/data/results.json
+          git add data/predictions/ data/context/ data/previews/ data/results/ site/data/results.json
           if ! git diff --cached --quiet; then
-            git commit -m "Update frozen Oak predictions and results"
+            git commit -m "Update Oak predictions, live context, and results"
             git push
           fi
 
-      - name: Upload weekly card
+      - name: Upload weekly card and live context
         uses: actions/upload-artifact@v4
         with:
           name: oak-weekly-predictions
           path: |
             data/predictions/*.csv
+            data/context/*.csv
+            data/previews/*.csv
             data/results/oak_results.csv
             site/data/latest.json
             site/data/results.json
