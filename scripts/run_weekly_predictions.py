@@ -14,6 +14,7 @@ from oak_nfl.data.nflverse import load_pbp
 from oak_nfl.data.schedules import load_next_slate, load_week
 from oak_nfl.injury_context import build_game_injury_context
 from oak_nfl.live_qb import build_live_qb_inputs
+from oak_nfl.weather_context import build_game_weather_context
 from oak_nfl.weekly import run_weekly_predictions
 
 
@@ -47,6 +48,11 @@ def main() -> None:
         help="Add informational ESPN injury-report context without changing model points",
     )
     parser.add_argument(
+        "--live-weather",
+        action="store_true",
+        help="Add informational pregame weather context without changing model points",
+    )
+    parser.add_argument(
         "--freeze",
         action="store_true",
         help="Never overwrite an existing season/week snapshot",
@@ -78,7 +84,7 @@ def main() -> None:
     pbp: pd.DataFrame | None = None
     live_card: pd.DataFrame | None = None
     qb_inputs: pd.DataFrame | None = None
-    live_context_requested = args.live_qb or args.live_injuries
+    live_context_requested = args.live_qb or args.live_injuries or args.live_weather
 
     if live_context_requested:
         pbp = _load_history(season)
@@ -113,6 +119,20 @@ def main() -> None:
             ]
             live_card = live_card.merge(
                 game_injuries[injury_cols], on="game_id", how="left", validate="one_to_one"
+            )
+
+        if args.live_weather:
+            # Weather is supplemental and informational only. Provider/location
+            # gaps must not block the prediction run or move the model number.
+            game_weather = build_game_weather_context(slate)
+            weather_output = context_dir / f"oak_{season}_week_{week}_weather.csv"
+            game_weather.to_csv(weather_output, index=False)
+            print(f"Saved live weather context {weather_output}")
+            weather_cols = [
+                c for c in game_weather.columns if c not in {"home_team", "away_team"}
+            ]
+            live_card = live_card.merge(
+                game_weather[weather_cols], on="game_id", how="left", validate="one_to_one"
             )
 
         preview_dir = Path(args.preview_output_dir)
