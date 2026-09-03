@@ -36,13 +36,21 @@ def main() -> None:
     parser.add_argument("--week", type=int)
     parser.add_argument("--auto", action="store_true")
     parser.add_argument("--refresh-schedule", action="store_true")
-    parser.add_argument("--live-qb", action="store_true", help="Apply current nflverse depth-chart QB context")
+    parser.add_argument(
+        "--live-qb",
+        action="store_true",
+        help="Apply current nflverse depth-chart QB context",
+    )
     parser.add_argument(
         "--live-injuries",
         action="store_true",
         help="Add informational ESPN injury-report context without changing model points",
     )
-    parser.add_argument("--freeze", action="store_true", help="Never overwrite an existing season/week snapshot")
+    parser.add_argument(
+        "--freeze",
+        action="store_true",
+        help="Never overwrite an existing season/week snapshot",
+    )
     parser.add_argument("--output-dir", default="data/predictions")
     parser.add_argument("--context-output-dir", default="data/context")
     parser.add_argument("--preview-output-dir", default="data/previews")
@@ -100,7 +108,9 @@ def main() -> None:
             print(f"Saved live injury context {injury_output}")
 
             game_injuries = build_game_injury_context(injury_report, slate)
-            injury_cols = [c for c in game_injuries.columns if c not in {"home_team", "away_team"}]
+            injury_cols = [
+                c for c in game_injuries.columns if c not in {"home_team", "away_team"}
+            ]
             live_card = live_card.merge(
                 game_injuries[injury_cols], on="game_id", how="left", validate="one_to_one"
             )
