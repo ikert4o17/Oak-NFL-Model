@@ -1,6 +1,6 @@
 import pandas as pd
 
-from scripts.refresh_results import _finals_from_schedules, _load_frozen_predictions
+from oak_nfl.results_refresh import finals_from_schedules, load_frozen_predictions
 
 
 def test_finals_from_schedules_uses_normalized_closing_lines():
@@ -23,7 +23,7 @@ def test_finals_from_schedules_uses_normalized_closing_lines():
         ]
     )
 
-    finals = _finals_from_schedules(schedules)
+    finals = finals_from_schedules(schedules)
 
     assert finals.game_id.tolist() == ["g1"]
     row = finals.iloc[0]
@@ -39,7 +39,7 @@ def test_load_frozen_predictions_keeps_first_snapshot(tmp_path):
     duplicate.to_csv(tmp_path / "oak_2026_week_1_copy.csv", index=False)
     other.to_csv(tmp_path / "oak_2026_week_2.csv", index=False)
 
-    loaded = _load_frozen_predictions(tmp_path)
+    loaded = load_frozen_predictions(tmp_path)
 
     assert loaded.game_id.tolist() == ["g1", "g2"]
     assert loaded.loc[loaded.game_id.eq("g1"), "predicted_home_margin"].iloc[0] == 3.0
