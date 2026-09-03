@@ -1,7 +1,12 @@
 import pandas as pd
 import pytest
 
-from oak_nfl.injury_context import normalize_injury_report, normalize_status, team_injury_context
+from oak_nfl.injury_context import (
+    build_game_injury_context,
+    normalize_injury_report,
+    normalize_status,
+    team_injury_context,
+)
 
 
 def test_status_normalization_is_conservative():
@@ -40,6 +45,23 @@ def test_team_context_is_informational_and_zero_point():
     assert row["injury_questionable_count"] == 1
     assert row["injury_unknown_count"] == 1
     assert row["injury_auto_points"] == 0.0
+
+
+def test_game_context_adds_both_teams_without_model_points():
+    report = pd.DataFrame(
+        [
+            {"team": "KC", "player_name": "A", "position": "OT", "status": "Out"},
+            {"team": "BUF", "player_name": "B", "position": "WR", "status": "Questionable"},
+        ]
+    )
+    slate = pd.DataFrame(
+        [{"game_id": "g1", "home_team": "KC", "away_team": "BUF"}]
+    )
+    row = build_game_injury_context(report, slate).iloc[0]
+    assert row["home_injury_out_count"] == 1
+    assert row["away_injury_questionable_count"] == 1
+    assert row["home_injury_auto_points"] == 0.0
+    assert row["away_injury_auto_points"] == 0.0
 
 
 def test_missing_required_columns_raise():
