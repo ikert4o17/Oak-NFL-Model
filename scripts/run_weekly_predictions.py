@@ -31,6 +31,7 @@ def main() -> None:
     parser.add_argument("--week", type=int)
     parser.add_argument("--auto", action="store_true")
     parser.add_argument("--refresh-schedule", action="store_true")
+    parser.add_argument("--freeze", action="store_true", help="Never overwrite an existing season/week snapshot")
     parser.add_argument("--output-dir", default="data/predictions")
     args = parser.parse_args()
 
@@ -45,13 +46,18 @@ def main() -> None:
         raise RuntimeError("selected slate has no games")
     season = int(slate.iloc[0]["season"])
     week = int(slate.iloc[0]["week"])
-    pbp = _load_history(season)
-    card = run_weekly_predictions(pbp, slate)
 
     output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
     output = output_dir / f"oak_{season}_week_{week}.csv"
-    card.to_csv(output, index=False)
+    if args.freeze and output.exists():
+        card = pd.read_csv(output)
+        print(f"Using frozen weekly snapshot {output}")
+    else:
+        pbp = _load_history(season)
+        card = run_weekly_predictions(pbp, slate)
+        card.to_csv(output, index=False)
+        print(f"Saved {output}")
 
     display = [
         "away_team",
@@ -66,7 +72,6 @@ def main() -> None:
         "total_side",
     ]
     print(card[[c for c in display if c in card.columns]].to_string(index=False))
-    print(f"\nSaved {output}")
 
 
 if __name__ == "__main__":
