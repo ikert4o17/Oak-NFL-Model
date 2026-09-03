@@ -84,3 +84,38 @@ def team_injury_context(report: pd.DataFrame) -> pd.DataFrame:
     grouped[list(count_cols)] = grouped[list(count_cols)].astype(int)
     grouped["injury_auto_points"] = 0.0
     return grouped
+
+
+def build_game_injury_context(report: pd.DataFrame, slate: pd.DataFrame) -> pd.DataFrame:
+    """Attach home/away injury summaries to each slate game for live display."""
+    required = {"game_id", "home_team", "away_team"}
+    missing = required.difference(slate.columns)
+    if missing:
+        raise ValueError(f"slate missing required columns: {sorted(missing)}")
+
+    team_context = team_injury_context(report)
+    context_cols = [c for c in team_context.columns if c != "team"]
+
+    home = team_context.rename(
+        columns={"team": "home_team", **{c: f"home_{c}" for c in context_cols}}
+    )
+    away = team_context.rename(
+        columns={"team": "away_team", **{c: f"away_{c}" for c in context_cols}}
+    )
+    out = slate[["game_id", "home_team", "away_team"]].copy()
+    out = out.merge(home, on="home_team", how="left").merge(away, on="away_team", how="left")
+
+    count_suffixes = (
+        "injury_players_reported",
+        "injury_out_count",
+        "injury_doubtful_count",
+        "injury_questionable_count",
+        "injury_unknown_count",
+    )
+    for side in ("home", "away"):
+        for suffix in count_suffixes:
+            col = f"{side}_{suffix}"
+            out[col] = out[col].fillna(0).astype(int)
+        out[f"{side}_injury_auto_points"] = out[f"{side}_injury_auto_points"].fillna(0.0)
+        out[f"{side}_injury_source"] = out[f"{side}_injury_source"].fillna("missing")
+    return out
