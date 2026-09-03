@@ -1,24 +1,16 @@
-"""Conservative normalization for live NFL injury-report context.
+"""Informational live NFL injury context for Oak weekly previews.
 
-This module is intentionally informational first. It does not invent player
-values or turn ambiguous injury-report language into model points. Numerical
-personnel adjustments remain a separate, explicitly supplied input.
+This layer intentionally does not convert raw injury-report labels into model
+points. Provider adapters normalize data first; this module summarizes what is
+known for display/audit purposes. Numerical personnel adjustments stay in the
+separate validated personnel path.
 """
 
 from __future__ import annotations
 
 import pandas as pd
 
-STATUS_ALIASES = {
-    "out": "out",
-    "doubtful": "doubtful",
-    "questionable": "questionable",
-    "limited": "limited",
-    "limited participation": "limited",
-    "full": "full",
-    "full participation": "full",
-    "active": "active",
-}
+from oak_nfl.data.injuries import normalize_position, normalize_status
 
 STATUS_CONFIDENCE = {
     "out": "high",
@@ -31,38 +23,39 @@ STATUS_CONFIDENCE = {
 }
 
 
-def normalize_status(value: object) -> str:
-    """Map common official-report labels to Oak's small status vocabulary."""
-    if pd.isna(value):
-        return "unknown"
-    text = str(value).strip().lower()
-    return STATUS_ALIASES.get(text, "unknown")
-
-
 def normalize_injury_report(report: pd.DataFrame) -> pd.DataFrame:
-    """Normalize a provider injury report without assigning model points.
+    """Normalize report columns needed by the live informational layer.
 
-    Required fields are deliberately small so a provider adapter can rename
-    source-specific columns before calling this function. Unknown or ambiguous
-    statuses remain ``unknown`` and therefore imply no automatic adjustment.
+    The canonical provider schema uses ``position_group``. ``position`` is also
+    accepted for small/manual inputs and converted into the canonical grouping.
+    Unknown or ambiguous statuses remain explicit and never authorize an
+    automatic point adjustment.
     """
-    required = {"team", "player_name", "position", "status"}
-    missing = required.difference(report.columns)
+    data = report.copy()
+    if "position_group" not in data.columns and "position" in data.columns:
+        data["position_group"] = data["position"]
+
+    required = {"team", "player_name", "position_group", "status"}
+    missing = required.difference(data.columns)
     if missing:
         raise ValueError(f"injury report missing required columns: {sorted(missing)}")
 
-    out = report.copy()
-    out["team"] = out["team"].astype(str).str.strip().str.upper()
-    out["player_name"] = out["player_name"].astype(str).str.strip()
-    out["position"] = out["position"].astype(str).str.strip().str.upper()
-    out["injury_status"] = out["status"].map(normalize_status)
-    out["injury_confidence"] = out["injury_status"].map(STATUS_CONFIDENCE)
-    out["automatic_adjustment_allowed"] = False
-    return out
+    data["team"] = data["team"].astype(str).str.strip().str.upper()
+    data["player_name"] = data["player_name"].astype(str).str.strip()
+    data["position_group"] = data["position_group"].map(normalize_position)
+    data["injury_status"] = data["status"].map(normalize_status)
+    data["injury_confidence"] = data["injury_status"].map(STATUS_CONFIDENCE)
+    data["automatic_adjustment_allowed"] = False
+    if "source" not in data.columns:
+        data["source"] = "unknown"
+    if "report_date" not in data.columns:
+        data["report_date"] = pd.NaT
+    data["report_date"] = pd.to_datetime(data["report_date"], errors="coerce", utc=True)
+    return data
 
 
 def team_injury_context(report: pd.DataFrame) -> pd.DataFrame:
-    """Build auditable team-level live context from a normalized report."""
+    """Build auditable team-level live context without changing predictions."""
     frame = normalize_injury_report(report)
     frame["is_out"] = frame["injury_status"].eq("out")
     frame["is_doubtful"] = frame["injury_status"].eq("doubtful")
@@ -77,15 +70,17 @@ def team_injury_context(report: pd.DataFrame) -> pd.DataFrame:
             injury_doubtful_count=("is_doubtful", "sum"),
             injury_questionable_count=("is_questionable", "sum"),
             injury_unknown_count=("is_unknown", "sum"),
+            injury_report_date=("report_date", "max"),
+            injury_source=("source", lambda s: ",".join(sorted(set(s.dropna().astype(str))))),
         )
     )
-    for col in (
+    count_cols = (
         "injury_players_reported",
         "injury_out_count",
         "injury_doubtful_count",
         "injury_questionable_count",
         "injury_unknown_count",
-    ):
-        grouped[col] = grouped[col].astype(int)
+    )
+    grouped[list(count_cols)] = grouped[list(count_cols)].astype(int)
     grouped["injury_auto_points"] = 0.0
     return grouped
