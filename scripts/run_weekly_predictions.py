@@ -37,6 +37,7 @@ def main() -> None:
     parser.add_argument("--freeze", action="store_true", help="Never overwrite an existing season/week snapshot")
     parser.add_argument("--output-dir", default="data/predictions")
     parser.add_argument("--context-output-dir", default="data/context")
+    parser.add_argument("--preview-output-dir", default="data/previews")
     args = parser.parse_args()
 
     if args.auto:
@@ -54,21 +55,40 @@ def main() -> None:
     output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
     output = output_dir / f"oak_{season}_week_{week}.csv"
+
+    # Live context is refreshed even after an official card has been frozen. That
+    # gives Oak a current day-by-day preview without rewriting the auditable
+    # published snapshot used for results grading.
+    pbp: pd.DataFrame | None = None
+    live_card: pd.DataFrame | None = None
+    if args.live_qb:
+        pbp = _load_history(season)
+        depth = load_depth_charts(season)
+        qb_inputs = build_live_qb_inputs(pbp, slate, depth)
+
+        context_dir = Path(args.context_output_dir)
+        context_dir.mkdir(parents=True, exist_ok=True)
+        context_output = context_dir / f"oak_{season}_week_{week}_qb.csv"
+        qb_inputs.to_csv(context_output, index=False)
+        print(f"Saved live QB context {context_output}")
+
+        live_card = run_weekly_predictions(pbp, slate, qb_inputs=qb_inputs)
+        preview_dir = Path(args.preview_output_dir)
+        preview_dir.mkdir(parents=True, exist_ok=True)
+        preview_output = preview_dir / f"oak_{season}_week_{week}_live.csv"
+        live_card.to_csv(preview_output, index=False)
+        print(f"Saved current adjusted preview {preview_output}")
+
     if args.freeze and output.exists():
         card = pd.read_csv(output)
         print(f"Using frozen weekly snapshot {output}")
     else:
-        pbp = _load_history(season)
-        qb_inputs = None
-        if args.live_qb:
-            depth = load_depth_charts(season)
-            qb_inputs = build_live_qb_inputs(pbp, slate, depth)
-            context_dir = Path(args.context_output_dir)
-            context_dir.mkdir(parents=True, exist_ok=True)
-            context_output = context_dir / f"oak_{season}_week_{week}_qb.csv"
-            qb_inputs.to_csv(context_output, index=False)
-            print(f"Saved live QB context {context_output}")
-        card = run_weekly_predictions(pbp, slate, qb_inputs=qb_inputs)
+        if live_card is not None:
+            card = live_card
+        else:
+            if pbp is None:
+                pbp = _load_history(season)
+            card = run_weekly_predictions(pbp, slate)
         card.to_csv(output, index=False)
         print(f"Saved {output}")
 
