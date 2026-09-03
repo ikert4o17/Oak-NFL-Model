@@ -8,7 +8,7 @@ kept as ``unknown`` by the canonical normalizer.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 import pandas as pd
@@ -34,7 +34,7 @@ def parse_espn_injuries(
     week: int | None = None,
 ) -> pd.DataFrame:
     """Convert one ESPN injury response into Oak's canonical injury frame."""
-    fetched_at = fetched_at or datetime.now(timezone.utc)
+    fetched_at = fetched_at or datetime.now(UTC)
     season_obj = payload.get("season") or {}
     resolved_season = season if season is not None else season_obj.get("year")
     resolved_week = week if week is not None else payload.get("week")
