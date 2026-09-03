@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from oak_nfl.data.espn_injuries import parse_espn_injuries
 
@@ -35,7 +35,7 @@ def test_parse_espn_injuries_normalizes_provider_payload():
         payload,
         season=2026,
         week=1,
-        fetched_at=datetime(2026, 9, 9, 20, 0, tzinfo=timezone.utc),
+        fetched_at=datetime(2026, 9, 9, 20, 0, tzinfo=UTC),
     )
 
     assert out["team"].tolist() == ["DAL", "DAL"]
