@@ -1,8 +1,8 @@
 import numpy as np
 import pandas as pd
 
-from oak_nfl.data.depth_charts import expected_starting_qbs, normalize_depth_charts
 from oak_nfl import live_qb
+from oak_nfl.data.depth_charts import expected_starting_qbs, normalize_depth_charts
 from oak_nfl.qb_adjustment import qb_change_points
 
 
