@@ -11,6 +11,17 @@ import requests
 
 OPEN_METEO_URL = "https://api.open-meteo.com/v1/forecast"
 EASTERN = ZoneInfo("America/New_York")
+HOURLY_FIELDS = (
+    "temperature_2m,precipitation_probability,precipitation,weather_code,"
+    "wind_speed_10m,wind_gusts_10m"
+)
+WEATHER_FETCH_ERRORS = (
+    requests.RequestException,
+    ValueError,
+    KeyError,
+    TypeError,
+    IndexError,
+)
 
 # Approximate home-stadium coordinates. Neutral-site games intentionally do not
 # fall back to these coordinates because a wrong forecast is worse than missing
@@ -115,16 +126,7 @@ def fetch_game_weather(
         params={
             "latitude": latitude,
             "longitude": longitude,
-            "hourly": ",".join(
-                [
-                    "temperature_2m",
-                    "precipitation_probability",
-                    "precipitation",
-                    "weather_code",
-                    "wind_speed_10m",
-                    "wind_gusts_10m",
-                ]
-            ),
+            "hourly": HOURLY_FIELDS,
             "temperature_unit": "fahrenheit",
             "wind_speed_unit": "mph",
             "precipitation_unit": "inch",
@@ -160,7 +162,7 @@ def fetch_slate_weather(
     for _, game in slate.iterrows():
         try:
             rows.append(fetch_game_weather(game, timeout=timeout, session=session))
-        except Exception:
+        except WEATHER_FETCH_ERRORS:
             rows.append(
                 {
                     "game_id": game["game_id"],
