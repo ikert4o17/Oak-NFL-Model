@@ -58,13 +58,22 @@ POSITION_ALIASES = {
 
 
 def normalize_status(value: object) -> str:
-    """Map provider-specific availability labels to Oak's canonical status."""
+    """Map provider availability labels to Oak status without guessing.
+
+    Unrecognized or missing labels become ``unknown``. Treating ambiguity as
+    healthy/active would silently suppress injury context, so Oak keeps it
+    explicit and numerical adjustment code can safely default to zero.
+    """
+    if pd.isna(value):
+        return "unknown"
     text = str(value).strip().lower()
-    return STATUS_ALIASES.get(text, "active")
+    return STATUS_ALIASES.get(text, "unknown")
 
 
 def normalize_position(value: object) -> str:
     """Map detailed roster positions into Oak's modeling groups."""
+    if pd.isna(value):
+        return "UNK"
     text = str(value).strip().upper()
     return POSITION_ALIASES.get(text, text or "UNK")
 
@@ -100,7 +109,7 @@ def normalize_injury_feed(
     data["team"] = data["team"].astype(str).str.upper().str.strip()
     data["season"] = pd.to_numeric(data["season"], errors="raise").astype(int)
     data["week"] = pd.to_numeric(data["week"], errors="raise").astype(int)
-    data["report_date"] = pd.to_datetime(data["report_date"], errors="coerce")
+    data["report_date"] = pd.to_datetime(data["report_date"], errors="coerce", utc=True)
     return data[CANONICAL_COLUMNS].drop_duplicates().reset_index(drop=True)
 
 
