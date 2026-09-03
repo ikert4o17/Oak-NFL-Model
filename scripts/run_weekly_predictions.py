@@ -8,8 +8,11 @@ from pathlib import Path
 import pandas as pd
 
 from oak_nfl.data.depth_charts import load_depth_charts
+from oak_nfl.data.espn_injuries import fetch_espn_injuries
+from oak_nfl.data.injuries import CANONICAL_COLUMNS
 from oak_nfl.data.nflverse import load_pbp
 from oak_nfl.data.schedules import load_next_slate, load_week
+from oak_nfl.injury_context import build_game_injury_context
 from oak_nfl.live_qb import build_live_qb_inputs
 from oak_nfl.weekly import run_weekly_predictions
 
@@ -34,6 +37,11 @@ def main() -> None:
     parser.add_argument("--auto", action="store_true")
     parser.add_argument("--refresh-schedule", action="store_true")
     parser.add_argument("--live-qb", action="store_true", help="Apply current nflverse depth-chart QB context")
+    parser.add_argument(
+        "--live-injuries",
+        action="store_true",
+        help="Add informational ESPN injury-report context without changing model points",
+    )
     parser.add_argument("--freeze", action="store_true", help="Never overwrite an existing season/week snapshot")
     parser.add_argument("--output-dir", default="data/predictions")
     parser.add_argument("--context-output-dir", default="data/context")
@@ -61,18 +69,42 @@ def main() -> None:
     # published snapshot used for results grading.
     pbp: pd.DataFrame | None = None
     live_card: pd.DataFrame | None = None
-    if args.live_qb:
-        pbp = _load_history(season)
-        depth = load_depth_charts(season)
-        qb_inputs = build_live_qb_inputs(pbp, slate, depth)
+    qb_inputs: pd.DataFrame | None = None
+    live_context_requested = args.live_qb or args.live_injuries
 
+    if live_context_requested:
+        pbp = _load_history(season)
         context_dir = Path(args.context_output_dir)
         context_dir.mkdir(parents=True, exist_ok=True)
-        context_output = context_dir / f"oak_{season}_week_{week}_qb.csv"
-        qb_inputs.to_csv(context_output, index=False)
-        print(f"Saved live QB context {context_output}")
+
+        if args.live_qb:
+            depth = load_depth_charts(season)
+            qb_inputs = build_live_qb_inputs(pbp, slate, depth)
+            qb_output = context_dir / f"oak_{season}_week_{week}_qb.csv"
+            qb_inputs.to_csv(qb_output, index=False)
+            print(f"Saved live QB context {qb_output}")
 
         live_card = run_weekly_predictions(pbp, slate, qb_inputs=qb_inputs)
+
+        if args.live_injuries:
+            try:
+                injury_report = fetch_espn_injuries(season=season, week=week)
+            except Exception as exc:
+                # Injury context is supplemental. A provider outage must never
+                # block Oak's core prediction run or fabricate an adjustment.
+                print(f"Live injury context unavailable; continuing safely: {exc}")
+                injury_report = pd.DataFrame(columns=CANONICAL_COLUMNS)
+
+            injury_output = context_dir / f"oak_{season}_week_{week}_injuries.csv"
+            injury_report.to_csv(injury_output, index=False)
+            print(f"Saved live injury context {injury_output}")
+
+            game_injuries = build_game_injury_context(injury_report, slate)
+            injury_cols = [c for c in game_injuries.columns if c not in {"home_team", "away_team"}]
+            live_card = live_card.merge(
+                game_injuries[injury_cols], on="game_id", how="left", validate="one_to_one"
+            )
+
         preview_dir = Path(args.preview_output_dir)
         preview_dir.mkdir(parents=True, exist_ok=True)
         preview_output = preview_dir / f"oak_{season}_week_{week}_live.csv"
