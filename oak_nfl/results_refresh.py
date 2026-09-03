@@ -1,11 +1,8 @@
 """Helpers for refreshing Oak's public results ledger."""
 
-from __future__ import annotations
-
 from pathlib import Path
 
 import pandas as pd
-
 
 PREDICTION_GLOB = "oak_*_week_*.csv"
 
