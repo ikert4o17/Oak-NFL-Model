@@ -16,6 +16,7 @@ on:
       - "oak_nfl/run_audit.py"
       - "oak_nfl/qb.py"
       - "oak_nfl/qb_adjustment.py"
+      - "oak_nfl/survivor.py"
       - "oak_nfl/data/depth_charts.py"
       - "oak_nfl/data/injuries.py"
       - "oak_nfl/data/espn_injuries.py"
@@ -24,7 +25,10 @@ on:
       - "oak_nfl/results.py"
       - "scripts/run_weekly_predictions.py"
       - "scripts/build_dashboard_data.py"
+      - "scripts/build_power_ratings.py"
+      - "scripts/build_survivor_data.py"
       - "scripts/refresh_results.py"
+      - "site/**"
       - ".github/workflows/oak-production.yml"
 
 permissions:
@@ -52,19 +56,23 @@ jobs:
       - name: Refresh closing-line results
         run: python scripts/refresh_results.py --refresh-schedule
 
-      - name: Build dashboard data
+      - name: Build dashboard and Survivor data
         run: |
           latest=$(ls -t data/predictions/oak_*.csv | head -1)
           python scripts/build_dashboard_data.py "$latest"
+          season=$(python -c 'import pandas as pd,sys; d=pd.read_csv(sys.argv[1]); print(int(d.iloc[0].season))' "$latest")
+          week=$(python -c 'import pandas as pd,sys; d=pd.read_csv(sys.argv[1]); print(int(d.iloc[0].week))' "$latest")
+          python scripts/build_power_ratings.py --season "$season" --week "$week"
+          python scripts/build_survivor_data.py "$latest"
 
-      - name: Persist frozen card, live context, previews, archives, and results
+      - name: Persist frozen card, live context, previews, Survivor, and results
         if: github.event_name != 'pull_request'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/predictions/ data/context/ data/previews/ data/results/ site/data/results.json
+          git add data/predictions/ data/context/ data/previews/ data/results/ data/survivor/ site/data/latest.json site/data/results.json site/data/power.json site/data/survivor.json
           if ! git diff --cached --quiet; then
-            git commit -m "Update Oak predictions, live context, and results"
+            git commit -m "Update Oak predictions, live context, Survivor, and results"
             git push
           fi
 
@@ -78,6 +86,9 @@ jobs:
             data/context/**/*.json
             data/previews/*.csv
             data/results/oak_results.csv
+            data/survivor/state.json
             site/data/latest.json
             site/data/results.json
+            site/data/power.json
+            site/data/survivor.json
           if-no-files-found: error
