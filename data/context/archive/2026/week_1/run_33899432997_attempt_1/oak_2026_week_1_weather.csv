@@ -1,0 +1,17 @@
+game_id,home_team,away_team,location,roof,surface,stadium,weather_available,weather_source,forecast_time_utc,temperature_f,wind_mph,wind_gust_mph,precipitation_probability_pct,precipitation_in,weather_code,weather_auto_points
+2026_01_NE_SEA,SEA,NE,Home,outdoors,fieldturf,Lumen Field,True,open-meteo,2026-09-10 00:00:00+00:00,78.2,7.3,8.7,0,0.0,0,0.0
+2026_01_SF_LA,LA,SF,Neutral,dome,matrixturf,Melbourne Cricket Ground,False,missing,,,,,,,,0.0
+2026_01_ATL_PIT,PIT,ATL,Home,outdoors,grass,Acrisure Stadium,True,open-meteo,2026-09-13 17:00:00+00:00,74.8,6.5,10.1,15,0.0,3,0.0
+2026_01_BAL_IND,IND,BAL,Home,,fieldturf,Lucas Oil Stadium,True,open-meteo,2026-09-13 17:00:00+00:00,81.4,3.2,6.0,13,0.0,0,0.0
+2026_01_BUF_HOU,HOU,BUF,Home,,astroturf,Reliant Stadium,True,open-meteo,2026-09-13 17:00:00+00:00,94.1,4.3,8.5,9,0.0,0,0.0
+2026_01_CHI_CAR,CAR,CHI,Home,outdoors,grass,Bank of America Stadium,True,open-meteo,2026-09-13 17:00:00+00:00,83.1,9.2,12.8,4,0.004,51,0.0
+2026_01_CLE_JAX,JAX,CLE,Home,outdoors,grass,EverBank Stadium,True,open-meteo,2026-09-13 17:00:00+00:00,97.0,6.2,5.4,19,0.0,1,0.0
+2026_01_NO_DET,DET,NO,Home,dome,fieldturf,Ford Field,True,open-meteo,2026-09-13 17:00:00+00:00,77.3,8.2,12.8,16,0.0,1,0.0
+2026_01_NYJ_TEN,TEN,NYJ,Home,outdoors,grass,Nissan Stadium,True,open-meteo,2026-09-13 17:00:00+00:00,89.9,4.7,13.6,7,0.0,3,0.0
+2026_01_TB_CIN,CIN,TB,Home,outdoors,fieldturf,Paycor Stadium,True,open-meteo,2026-09-13 17:00:00+00:00,79.1,5.4,10.3,12,0.0,3,0.0
+2026_01_ARI_LAC,LAC,ARI,Home,dome,matrixturf,SoFi Stadium,True,open-meteo,2026-09-13 20:00:00+00:00,79.5,8.5,3.8,2,0.0,0,0.0
+2026_01_GB_MIN,MIN,GB,Home,dome,sportturf,U.S. Bank Stadium,True,open-meteo,2026-09-13 20:00:00+00:00,68.0,10.1,15.9,13,0.0,1,0.0
+2026_01_MIA_LV,LV,MIA,Home,dome,grass,Allegiant Stadium,False,missing,,,,,,,,0.0
+2026_01_WAS_PHI,PHI,WAS,Home,outdoors,grass,Lincoln Financial Field,False,missing,,,,,,,,0.0
+2026_01_DAL_NYG,NYG,DAL,Home,outdoors,fieldturf,MetLife Stadium,False,missing,,,,,,,,0.0
+2026_01_DEN_KC,KC,DEN,Home,outdoors,grass,GEHA Field at Arrowhead Stadium,False,missing,,,,,,,,0.0
