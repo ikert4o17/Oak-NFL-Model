@@ -14,6 +14,7 @@ from oak_nfl.data.nflverse import load_pbp
 from oak_nfl.data.schedules import load_next_slate, load_week
 from oak_nfl.injury_context import build_game_injury_context
 from oak_nfl.live_qb import build_live_qb_inputs
+from oak_nfl.run_audit import build_run_manifest, write_run_manifest
 from oak_nfl.weather_context import build_game_weather_context
 from oak_nfl.weekly import run_weekly_predictions
 
@@ -77,6 +78,14 @@ def main() -> None:
     output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
     output = output_dir / f"oak_{season}_week_{week}.csv"
+    frozen_card_existed_before = output.exists()
+
+    context_dir = Path(args.context_output_dir)
+    context_dir.mkdir(parents=True, exist_ok=True)
+    qb_output: Path | None = None
+    injury_output: Path | None = None
+    weather_output: Path | None = None
+    preview_output: Path | None = None
 
     # Live context is refreshed even after an official card has been frozen. That
     # gives Oak a current day-by-day preview without rewriting the auditable
@@ -88,8 +97,6 @@ def main() -> None:
 
     if live_context_requested:
         pbp = _load_history(season)
-        context_dir = Path(args.context_output_dir)
-        context_dir.mkdir(parents=True, exist_ok=True)
 
         if args.live_qb:
             depth = load_depth_charts(season)
@@ -141,7 +148,7 @@ def main() -> None:
         live_card.to_csv(preview_output, index=False)
         print(f"Saved current adjusted preview {preview_output}")
 
-    if args.freeze and output.exists():
+    if args.freeze and frozen_card_existed_before:
         card = pd.read_csv(output)
         print(f"Using frozen weekly snapshot {output}")
     else:
@@ -153,6 +160,24 @@ def main() -> None:
             card = run_weekly_predictions(pbp, slate)
         card.to_csv(output, index=False)
         print(f"Saved {output}")
+
+    manifest = build_run_manifest(
+        season=season,
+        week=week,
+        frozen_card_path=output,
+        frozen_card_existed_before=frozen_card_existed_before,
+        live_preview_path=preview_output,
+        qb_context_path=qb_output,
+        injury_context_path=injury_output,
+        weather_context_path=weather_output,
+        live_qb=args.live_qb,
+        live_injuries=args.live_injuries,
+        live_weather=args.live_weather,
+        freeze=args.freeze,
+    )
+    manifest_output = context_dir / f"oak_{season}_week_{week}_run_manifest.json"
+    write_run_manifest(manifest_output, manifest)
+    print(f"Saved production audit manifest {manifest_output}")
 
     display = [
         "away_team",
