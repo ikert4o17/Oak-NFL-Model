@@ -56,7 +56,7 @@ jobs:
           latest=$(ls -t data/predictions/oak_*.csv | head -1)
           python scripts/build_dashboard_data.py "$latest"
 
-      - name: Persist frozen card, live context, previews, and results
+      - name: Persist frozen card, live context, previews, archives, and results
         if: github.event_name != 'pull_request'
         run: |
           git config user.name "github-actions[bot]"
@@ -73,8 +73,8 @@ jobs:
           name: oak-weekly-predictions
           path: |
             data/predictions/*.csv
-            data/context/*.csv
-            data/context/*.json
+            data/context/**/*.csv
+            data/context/**/*.json
             data/previews/*.csv
             data/results/oak_results.csv
             site/data/latest.json
