@@ -1,0 +1,46 @@
+{
+  "correction_type": "frozen_card_neutral_site_home_field_removal",
+  "season": 2026,
+  "week": 1,
+  "game_id": "2026_01_SF_LA",
+  "away_team": "SF",
+  "home_team": "LA",
+  "site": "Melbourne Cricket Ground",
+  "location": "Neutral",
+  "correction_date": "2026-09-04",
+  "reason": "The original frozen Week 1 card included the V5 home intercept for a neutral-site game. PR #34 corrected production logic so neutral-site games do not receive that home-field constant. This record documents the one-time correction of the pre-grading frozen card.",
+  "model_invariants": {
+    "v5_coefficients_changed": false,
+    "v12_changed": false,
+    "qb_adjustment_changed": false,
+    "injury_adjustment_changed": false,
+    "weather_adjustment_changed": false
+  },
+  "source_frozen_card_blob_sha": "d252e570fc20fcfe632abd7e881e69671f750d0c",
+  "source_fix_merge_commit": "4434b354912ed570e873f510fd883dbb834dc8b9",
+  "before": {
+    "predicted_home_margin": 6.281628156341251,
+    "spread_edge": 2.7816281563412506,
+    "spread_side": "LA",
+    "projected_away_score": 21.247002652477963,
+    "projected_home_score": 27.528630808819212
+  },
+  "correction": {
+    "removed_v5_home_intercept": 1.6471
+  },
+  "after": {
+    "predicted_home_margin": 4.634528156341251,
+    "spread_edge": 1.1345281563412506,
+    "spread_side": "LA",
+    "projected_away_score": 22.070552652477964,
+    "projected_home_score": 26.70508080881921
+  },
+  "unchanged": {
+    "spread_line": -3.5,
+    "predicted_total": 48.775633461297176,
+    "total_line": 48.5,
+    "total_edge": 0.2756334612971756,
+    "total_side": "OVER"
+  },
+  "grading_status_at_correction": "pre-grading"
+}
