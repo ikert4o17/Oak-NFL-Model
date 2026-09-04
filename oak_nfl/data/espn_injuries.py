@@ -26,6 +26,16 @@ def _status_text(item: dict[str, Any]) -> object:
     return status
 
 
+def _team_abbreviation(team_block: dict[str, Any]) -> object:
+    """Read ESPN team identity across the nested and current flat schemas."""
+    team = team_block.get("team")
+    if isinstance(team, dict):
+        nested = team.get("abbreviation")
+        if nested:
+            return nested
+    return team_block.get("abbreviation")
+
+
 def parse_espn_injuries(
     payload: dict[str, Any],
     *,
@@ -43,8 +53,7 @@ def parse_espn_injuries(
 
     rows: list[dict[str, object]] = []
     for team_block in payload.get("injuries") or []:
-        team = team_block.get("team") or {}
-        team_abbr = team.get("abbreviation")
+        team_abbr = _team_abbreviation(team_block)
         for injury in team_block.get("injuries") or []:
             athlete = injury.get("athlete") or {}
             position = athlete.get("position") or {}
@@ -79,6 +88,8 @@ def parse_espn_injuries(
         return raw
     if raw["season"].isna().any() or raw["week"].isna().any():
         raise ValueError("ESPN injury payload did not provide season/week context")
+    if raw["team"].isna().any():
+        raise ValueError("ESPN injury payload did not provide team abbreviations")
     return normalize_injury_feed(raw, source="espn")
 
 
