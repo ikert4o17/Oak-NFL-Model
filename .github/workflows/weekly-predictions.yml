@@ -11,11 +11,13 @@ on:
       - "oak_nfl/weekly.py"
       - "oak_nfl/live_qb.py"
       - "oak_nfl/injury_context.py"
+      - "oak_nfl/weather_context.py"
       - "oak_nfl/qb.py"
       - "oak_nfl/qb_adjustment.py"
       - "oak_nfl/data/depth_charts.py"
       - "oak_nfl/data/injuries.py"
       - "oak_nfl/data/espn_injuries.py"
+      - "oak_nfl/data/weather.py"
       - "oak_nfl/data/schedules.py"
       - "oak_nfl/results.py"
       - "scripts/run_weekly_predictions.py"
@@ -43,7 +45,7 @@ jobs:
         run: python -m pip install --upgrade pip && pip install -e ".[dev]"
 
       - name: Refresh live context and generate or reuse frozen weekly card
-        run: python scripts/run_weekly_predictions.py --auto --refresh-schedule --live-qb --live-injuries --freeze
+        run: python scripts/run_weekly_predictions.py --auto --refresh-schedule --live-qb --live-injuries --live-weather --freeze
 
       - name: Refresh closing-line results
         run: python scripts/refresh_results.py --refresh-schedule
