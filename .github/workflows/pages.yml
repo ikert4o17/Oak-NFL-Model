@@ -11,6 +11,7 @@ on:
       - "scripts/run_weekly_predictions.py"
       - "scripts/build_dashboard_data.py"
       - "scripts/build_power_ratings.py"
+      - "scripts/build_survivor_data.py"
       - "scripts/refresh_results.py"
       - ".github/workflows/pages.yml"
   schedule:
@@ -67,13 +68,14 @@ jobs:
       - name: Refresh closing-line results
         run: python scripts/refresh_results.py --refresh-schedule
 
-      - name: Build dashboard data and power ratings
+      - name: Build dashboard, power ratings, and Survivor
         run: |
           latest=$(ls -t data/predictions/oak_*.csv | head -1)
           python scripts/build_dashboard_data.py "$latest"
           season=$(basename "$latest" | sed -E 's/oak_([0-9]+)_week_([0-9]+)\.csv/\1/')
           week=$(basename "$latest" | sed -E 's/oak_([0-9]+)_week_([0-9]+)\.csv/\2/')
           python scripts/build_power_ratings.py --season "$season" --week "$week"
+          python scripts/build_survivor_data.py "$latest"
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
