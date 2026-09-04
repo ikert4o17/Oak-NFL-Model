@@ -16,6 +16,9 @@ on:
   schedule:
     - cron: "30 14 * * 2"
   workflow_dispatch:
+  workflow_run:
+    workflows: ["Oak Production Daily"]
+    types: [completed]
 
 permissions:
   contents: read
@@ -28,6 +31,7 @@ concurrency:
 
 jobs:
   deploy:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -35,6 +39,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: main
 
       - name: Set up Python
         uses: actions/setup-python@v5
