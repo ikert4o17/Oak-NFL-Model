@@ -71,6 +71,50 @@ def test_parse_espn_injuries_accepts_flat_team_block_schema():
     assert out["team"].tolist() == ["ARI"]
 
 
+def test_parse_espn_injuries_accepts_nested_team_id_without_abbreviation():
+    payload = {
+        "injuries": [
+            {
+                "team": {"id": "6", "displayName": "Dallas Cowboys"},
+                "injuries": [
+                    {
+                        "athlete": {
+                            "id": "12",
+                            "fullName": "Player Id",
+                            "position": {"abbreviation": "G"},
+                        },
+                        "status": "Out",
+                    }
+                ],
+            }
+        ]
+    }
+    out = parse_espn_injuries(payload, season=2026, week=1)
+    assert out["team"].tolist() == ["DAL"]
+
+
+def test_parse_espn_injuries_accepts_team_name_without_id_or_abbreviation():
+    payload = {
+        "injuries": [
+            {
+                "displayName": "Baltimore Ravens",
+                "injuries": [
+                    {
+                        "athlete": {
+                            "id": "13",
+                            "fullName": "Player Name",
+                            "position": {"abbreviation": "LB"},
+                        },
+                        "status": "Questionable",
+                    }
+                ],
+            }
+        ]
+    }
+    out = parse_espn_injuries(payload, season=2026, week=1)
+    assert out["team"].tolist() == ["BAL"]
+
+
 def test_parse_espn_injuries_rejects_unmapped_team_blocks():
     payload = {
         "injuries": [
@@ -89,7 +133,7 @@ def test_parse_espn_injuries_rejects_unmapped_team_blocks():
             }
         ]
     }
-    with pytest.raises(ValueError, match="team abbreviations"):
+    with pytest.raises(ValueError, match="recognized team identity"):
         parse_espn_injuries(payload, season=2026, week=1)
 
 
