@@ -1,11 +1,12 @@
 {
   "season": 2026,
-  "path_a": {
-    "alive": true,
-    "used": [],
-    "history": [],
-    "current": {
-      "week": 1,
+  "week": 1,
+  "generated_at": "2026-09-04T17:45:44.647740+00:00",
+  "method_note": "Survival confidence is a ranking transform of Oak projected margin, not a calibrated betting probability.",
+  "paths": {
+    "path_a": {
+      "name": "Best Survival Path",
+      "alive": true,
       "primary": {
         "team": "JAX",
         "opponent": "CLE",
@@ -21,15 +22,14 @@
         "oak_margin": 6.28,
         "survival_confidence": 0.7244,
         "future_value": 0.7806
-      }
-    }
-  },
-  "path_b": {
-    "alive": true,
-    "used": [],
-    "history": [],
-    "current": {
-      "week": 1,
+      },
+      "reason": "Strong current spot with limited premium future value \u2014 a good team to use now.",
+      "used_teams": [],
+      "history": []
+    },
+    "path_b": {
+      "name": "Best Pick Now",
+      "alive": true,
       "primary": {
         "team": "LA",
         "opponent": "SF",
@@ -45,7 +45,10 @@
         "oak_margin": 5.63,
         "survival_confidence": 0.7041,
         "future_value": 0.6053
-      }
+      },
+      "reason": "Highest current-week survival confidence, with future value used only as a tiebreaker.",
+      "used_teams": [],
+      "history": []
     }
   }
 }
