@@ -18,12 +18,115 @@ from oak_nfl.data.injuries import normalize_injury_feed
 
 ESPN_INJURIES_URL = "https://site.api.espn.com/apis/site/v2/sports/football/nfl/injuries"
 
+# ESPN's numeric NFL team IDs are stable provider identifiers and are useful
+# when the league-wide injury payload omits a team abbreviation.
+ESPN_TEAM_ID_TO_ABBR = {
+    "1": "ATL",
+    "2": "BUF",
+    "3": "CHI",
+    "4": "CIN",
+    "5": "CLE",
+    "6": "DAL",
+    "7": "DEN",
+    "8": "DET",
+    "9": "GB",
+    "10": "TEN",
+    "11": "IND",
+    "12": "KC",
+    "13": "LV",
+    "14": "LA",
+    "15": "MIA",
+    "16": "MIN",
+    "17": "NE",
+    "18": "NO",
+    "19": "NYG",
+    "20": "NYJ",
+    "21": "PHI",
+    "22": "ARI",
+    "23": "PIT",
+    "24": "LAC",
+    "25": "SF",
+    "26": "SEA",
+    "27": "TB",
+    "28": "WAS",
+    "29": "CAR",
+    "30": "JAX",
+    "33": "BAL",
+    "34": "HOU",
+}
+
+TEAM_NAME_TO_ABBR = {
+    "arizona cardinals": "ARI",
+    "atlanta falcons": "ATL",
+    "baltimore ravens": "BAL",
+    "buffalo bills": "BUF",
+    "carolina panthers": "CAR",
+    "chicago bears": "CHI",
+    "cincinnati bengals": "CIN",
+    "cleveland browns": "CLE",
+    "dallas cowboys": "DAL",
+    "denver broncos": "DEN",
+    "detroit lions": "DET",
+    "green bay packers": "GB",
+    "houston texans": "HOU",
+    "indianapolis colts": "IND",
+    "jacksonville jaguars": "JAX",
+    "kansas city chiefs": "KC",
+    "las vegas raiders": "LV",
+    "los angeles chargers": "LAC",
+    "los angeles rams": "LA",
+    "miami dolphins": "MIA",
+    "minnesota vikings": "MIN",
+    "new england patriots": "NE",
+    "new orleans saints": "NO",
+    "new york giants": "NYG",
+    "new york jets": "NYJ",
+    "philadelphia eagles": "PHI",
+    "pittsburgh steelers": "PIT",
+    "san francisco 49ers": "SF",
+    "seattle seahawks": "SEA",
+    "tampa bay buccaneers": "TB",
+    "tennessee titans": "TEN",
+    "washington commanders": "WAS",
+}
+
 
 def _status_text(item: dict[str, Any]) -> object:
     status = item.get("status")
     if isinstance(status, dict):
         return status.get("name") or status.get("description") or status.get("type")
     return status
+
+
+def _team_abbreviation(team_block: dict[str, Any]) -> object:
+    """Read ESPN team identity across known league-wide injury schemas."""
+    team = team_block.get("team")
+    candidates: list[dict[str, Any]] = []
+    if isinstance(team, dict):
+        candidates.append(team)
+    candidates.append(team_block)
+
+    for candidate in candidates:
+        abbreviation = candidate.get("abbreviation")
+        if abbreviation:
+            return abbreviation
+
+    for candidate in candidates:
+        team_id = candidate.get("id")
+        if team_id is not None:
+            abbreviation = ESPN_TEAM_ID_TO_ABBR.get(str(team_id))
+            if abbreviation:
+                return abbreviation
+
+    for candidate in candidates:
+        for key in ("displayName", "name", "shortDisplayName"):
+            name = candidate.get(key)
+            if isinstance(name, str):
+                abbreviation = TEAM_NAME_TO_ABBR.get(name.strip().lower())
+                if abbreviation:
+                    return abbreviation
+
+    return None
 
 
 def parse_espn_injuries(
@@ -43,8 +146,7 @@ def parse_espn_injuries(
 
     rows: list[dict[str, object]] = []
     for team_block in payload.get("injuries") or []:
-        team = team_block.get("team") or {}
-        team_abbr = team.get("abbreviation")
+        team_abbr = _team_abbreviation(team_block)
         for injury in team_block.get("injuries") or []:
             athlete = injury.get("athlete") or {}
             position = athlete.get("position") or {}
@@ -79,6 +181,8 @@ def parse_espn_injuries(
         return raw
     if raw["season"].isna().any() or raw["week"].isna().any():
         raise ValueError("ESPN injury payload did not provide season/week context")
+    if raw["team"].isna().any():
+        raise ValueError("ESPN injury payload did not provide a recognized team identity")
     return normalize_injury_feed(raw, source="espn")
 
 
