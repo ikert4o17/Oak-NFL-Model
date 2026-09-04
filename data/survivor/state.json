@@ -1,0 +1,5 @@
+{
+  "season": 2026,
+  "path_a": {"alive": true, "used": [], "history": [], "current": null},
+  "path_b": {"alive": true, "used": [], "history": [], "current": null}
+}
