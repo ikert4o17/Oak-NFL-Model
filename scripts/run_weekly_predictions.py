@@ -3,6 +3,9 @@
 from __future__ import annotations
 
 import argparse
+import os
+import shutil
+from datetime import UTC, datetime
 from pathlib import Path
 
 import pandas as pd
@@ -32,32 +35,44 @@ def _load_history(season: int, start: int = 2014) -> pd.DataFrame:
     return pd.concat(frames, ignore_index=True)
 
 
+def _archive_run_files(
+    *,
+    context_dir: Path,
+    season: int,
+    week: int,
+    generated_at: datetime,
+    files: dict[str, Path | None],
+) -> tuple[Path, dict[str, Path]]:
+    """Copy this run's latest files into a unique immutable audit directory."""
+    run_id = os.getenv("GITHUB_RUN_ID")
+    run_attempt = os.getenv("GITHUB_RUN_ATTEMPT")
+    timestamp = generated_at.astimezone(UTC).strftime("%Y%m%dT%H%M%S%fZ")
+    run_key = f"run_{run_id}_attempt_{run_attempt or '1'}" if run_id else f"run_{timestamp}"
+    archive_dir = context_dir / "archive" / f"{season}" / f"week_{week}" / run_key
+    if archive_dir.exists():
+        raise FileExistsError(f"immutable context archive already exists: {archive_dir}")
+    archive_dir.mkdir(parents=True, exist_ok=False)
+
+    archived: dict[str, Path] = {}
+    for label, source in files.items():
+        if source is None or not source.exists():
+            continue
+        destination = archive_dir / source.name
+        shutil.copy2(source, destination)
+        archived[label] = destination
+    return archive_dir, archived
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--season", type=int)
     parser.add_argument("--week", type=int)
     parser.add_argument("--auto", action="store_true")
     parser.add_argument("--refresh-schedule", action="store_true")
-    parser.add_argument(
-        "--live-qb",
-        action="store_true",
-        help="Apply current nflverse depth-chart QB context",
-    )
-    parser.add_argument(
-        "--live-injuries",
-        action="store_true",
-        help="Add informational ESPN injury-report context without changing model points",
-    )
-    parser.add_argument(
-        "--live-weather",
-        action="store_true",
-        help="Add informational pregame weather context without changing model points",
-    )
-    parser.add_argument(
-        "--freeze",
-        action="store_true",
-        help="Never overwrite an existing season/week snapshot",
-    )
+    parser.add_argument("--live-qb", action="store_true", help="Apply current nflverse depth-chart QB context")
+    parser.add_argument("--live-injuries", action="store_true", help="Add informational ESPN injury-report context without changing model points")
+    parser.add_argument("--live-weather", action="store_true", help="Add informational pregame weather context without changing model points")
+    parser.add_argument("--freeze", action="store_true", help="Never overwrite an existing season/week snapshot")
     parser.add_argument("--output-dir", default="data/predictions")
     parser.add_argument("--context-output-dir", default="data/context")
     parser.add_argument("--preview-output-dir", default="data/previews")
@@ -74,6 +89,7 @@ def main() -> None:
         raise RuntimeError("selected slate has no games")
     season = int(slate.iloc[0]["season"])
     week = int(slate.iloc[0]["week"])
+    run_generated_at = datetime.now(UTC)
 
     output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -87,9 +103,6 @@ def main() -> None:
     weather_output: Path | None = None
     preview_output: Path | None = None
 
-    # Live context is refreshed even after an official card has been frozen. That
-    # gives Oak a current day-by-day preview without rewriting the auditable
-    # published snapshot used for results grading.
     pbp: pd.DataFrame | None = None
     live_card: pd.DataFrame | None = None
     qb_inputs: pd.DataFrame | None = None
@@ -111,36 +124,23 @@ def main() -> None:
             try:
                 injury_report = fetch_espn_injuries(season=season, week=week)
             except Exception as exc:
-                # Injury context is supplemental. A provider outage must never
-                # block Oak's core prediction run or fabricate an adjustment.
                 print(f"Live injury context unavailable; continuing safely: {exc}")
                 injury_report = pd.DataFrame(columns=CANONICAL_COLUMNS)
 
             injury_output = context_dir / f"oak_{season}_week_{week}_injuries.csv"
             injury_report.to_csv(injury_output, index=False)
             print(f"Saved live injury context {injury_output}")
-
             game_injuries = build_game_injury_context(injury_report, slate)
-            injury_cols = [
-                c for c in game_injuries.columns if c not in {"home_team", "away_team"}
-            ]
-            live_card = live_card.merge(
-                game_injuries[injury_cols], on="game_id", how="left", validate="one_to_one"
-            )
+            injury_cols = [c for c in game_injuries.columns if c not in {"home_team", "away_team"}]
+            live_card = live_card.merge(game_injuries[injury_cols], on="game_id", how="left", validate="one_to_one")
 
         if args.live_weather:
-            # Weather is supplemental and informational only. Provider/location
-            # gaps must not block the prediction run or move the model number.
             game_weather = build_game_weather_context(slate)
             weather_output = context_dir / f"oak_{season}_week_{week}_weather.csv"
             game_weather.to_csv(weather_output, index=False)
             print(f"Saved live weather context {weather_output}")
-            weather_cols = [
-                c for c in game_weather.columns if c not in {"home_team", "away_team"}
-            ]
-            live_card = live_card.merge(
-                game_weather[weather_cols], on="game_id", how="left", validate="one_to_one"
-            )
+            weather_cols = [c for c in game_weather.columns if c not in {"home_team", "away_team"}]
+            live_card = live_card.merge(game_weather[weather_cols], on="game_id", how="left", validate="one_to_one")
 
         preview_dir = Path(args.preview_output_dir)
         preview_dir.mkdir(parents=True, exist_ok=True)
@@ -174,23 +174,26 @@ def main() -> None:
         live_injuries=args.live_injuries,
         live_weather=args.live_weather,
         freeze=args.freeze,
+        generated_at=run_generated_at,
     )
     manifest_output = context_dir / f"oak_{season}_week_{week}_run_manifest.json"
     write_run_manifest(manifest_output, manifest)
-    print(f"Saved production audit manifest {manifest_output}")
 
-    display = [
-        "away_team",
-        "home_team",
-        "predicted_home_margin",
-        "spread_line",
-        "spread_edge",
-        "spread_side",
-        "predicted_total",
-        "total_line",
-        "total_edge",
-        "total_side",
-    ]
+    archive_dir, archived = _archive_run_files(
+        context_dir=context_dir,
+        season=season,
+        week=week,
+        generated_at=run_generated_at,
+        files={"qb": qb_output, "injuries": injury_output, "weather": weather_output, "preview": preview_output},
+    )
+    manifest["archive"] = {"directory": str(archive_dir), "files": {key: str(path) for key, path in archived.items()}}
+    archived_manifest = archive_dir / manifest_output.name
+    write_run_manifest(archived_manifest, manifest)
+    write_run_manifest(manifest_output, manifest)
+    print(f"Saved production audit manifest {manifest_output}")
+    print(f"Archived immutable production context {archive_dir}")
+
+    display = ["away_team", "home_team", "predicted_home_margin", "spread_line", "spread_edge", "spread_side", "predicted_total", "total_line", "total_edge", "total_side"]
     print(card[[c for c in display if c in card.columns]].to_string(index=False))
 
 
