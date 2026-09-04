@@ -3,7 +3,8 @@ name: Weekly Oak Predictions
 on:
   workflow_dispatch:
   schedule:
-    - cron: "33 14 * * *"
+    - cron: "3 15 * * *"
+    - cron: "33 15 * * *"
   pull_request:
     paths:
       - "oak_nfl/production.py"
