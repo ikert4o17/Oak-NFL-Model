@@ -49,7 +49,7 @@ def _reason(path: str, primary: dict, alternate: dict | None) -> str:
         if primary["future_value"] < 0.65:
             return "Strong current spot with limited premium future value — a good team to use now."
         return "Best balance of current survival strength and preserving stronger future options."
-    if alternate and primary["win_confidence"] - alternate["win_confidence"] >= 0.05:
+    if alternate and primary["survival_confidence"] - alternate["survival_confidence"] >= 0.05:
         return "Oak's strongest current-week survival position."
     return "Highest current-week survival confidence, with future value used only as a tiebreaker."
 
