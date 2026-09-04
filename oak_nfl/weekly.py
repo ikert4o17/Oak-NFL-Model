@@ -9,7 +9,7 @@ from oak_nfl.features import build_team_game_features
 from oak_nfl.personnel import apply_personnel_adjustments
 from oak_nfl.production import build_weekly_game_card
 from oak_nfl.qb_adjustment import add_qb_change_adjustments
-from oak_nfl.ratings.v5 import build_v5_game_predictions, build_v5_pregame_ratings
+from oak_nfl.ratings.v5 import V5_INTERCEPT, build_v5_game_predictions, build_v5_pregame_ratings
 from oak_nfl.totals_v12 import predict_v12_totals
 
 
@@ -33,6 +33,31 @@ def _spread_core(pbp: pd.DataFrame, slate: pd.DataFrame) -> pd.DataFrame:
     return build_v5_game_predictions(games, ratings)
 
 
+def _remove_neutral_site_home_field(spread: pd.DataFrame, slate: pd.DataFrame) -> pd.DataFrame:
+    """Remove V5's fitted home intercept when the schedule marks a game neutral.
+
+    V5 is intentionally left frozen. Its intercept represents the baseline home-side
+    advantage learned from the training sample, so neutral-site games should not
+    receive that constant merely because nflverse assigns a nominal home team.
+    """
+    if "location" not in slate.columns:
+        return spread
+    neutral_ids = set(
+        slate.loc[
+            slate["location"].astype(str).str.strip().str.lower().eq("neutral"),
+            "game_id",
+        ].astype(str)
+    )
+    if not neutral_ids:
+        return spread
+    out = spread.copy()
+    mask = out["game_id"].astype(str).isin(neutral_ids)
+    out.loc[mask, "predicted_home_margin"] = (
+        pd.to_numeric(out.loc[mask, "predicted_home_margin"], errors="coerce") - V5_INTERCEPT
+    )
+    return out
+
+
 def run_weekly_predictions(
     pbp: pd.DataFrame,
     slate: pd.DataFrame,
@@ -52,7 +77,7 @@ def run_weekly_predictions(
     if missing:
         raise ValueError(f"slate missing required columns: {sorted(missing)}")
 
-    spread = _spread_core(pbp, slate)
+    spread = _remove_neutral_site_home_field(_spread_core(pbp, slate), slate)
     if qb_inputs is not None:
         spread = spread.merge(qb_inputs, on="game_id", how="left")
         spread = add_qb_change_adjustments(spread)

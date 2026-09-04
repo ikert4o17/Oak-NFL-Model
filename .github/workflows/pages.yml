@@ -14,13 +14,14 @@ on:
       - "scripts/refresh_results.py"
       - ".github/workflows/pages.yml"
   schedule:
-    - cron: "30 14 * * 2"
+    - cron: "23 14 * * *"
   workflow_dispatch:
   workflow_run:
     workflows: ["Oak Production Daily"]
     types: [completed]
 
 permissions:
+  actions: write
   contents: read
   pages: write
   id-token: write
@@ -30,8 +31,17 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  dispatch-production:
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dispatch Oak Production Daily
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run oak-production.yml --ref main
+
   deploy:
-    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    if: github.event_name != 'schedule' && (github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success')
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
