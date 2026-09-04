@@ -1,5 +1,7 @@
 from datetime import UTC, datetime
 
+import pytest
+
 from oak_nfl.data.espn_injuries import parse_espn_injuries
 
 
@@ -44,6 +46,51 @@ def test_parse_espn_injuries_normalizes_provider_payload():
     assert out["source"].tolist() == ["espn", "espn"]
     assert out["season"].tolist() == [2026, 2026]
     assert out["week"].tolist() == [1, 1]
+
+
+def test_parse_espn_injuries_accepts_flat_team_block_schema():
+    payload = {
+        "injuries": [
+            {
+                "abbreviation": "ARI",
+                "displayName": "Arizona Cardinals",
+                "injuries": [
+                    {
+                        "athlete": {
+                            "id": "10",
+                            "fullName": "Player Flat",
+                            "position": {"abbreviation": "RB"},
+                        },
+                        "status": "Questionable",
+                    }
+                ],
+            }
+        ]
+    }
+    out = parse_espn_injuries(payload, season=2026, week=1)
+    assert out["team"].tolist() == ["ARI"]
+
+
+def test_parse_espn_injuries_rejects_unmapped_team_blocks():
+    payload = {
+        "injuries": [
+            {
+                "displayName": "Unknown Club",
+                "injuries": [
+                    {
+                        "athlete": {
+                            "id": "11",
+                            "fullName": "Player Unknown",
+                            "position": {"abbreviation": "WR"},
+                        },
+                        "status": "Out",
+                    }
+                ],
+            }
+        ]
+    }
+    with pytest.raises(ValueError, match="team abbreviations"):
+        parse_espn_injuries(payload, season=2026, week=1)
 
 
 def test_parse_espn_injuries_keeps_unknown_status_unknown():
