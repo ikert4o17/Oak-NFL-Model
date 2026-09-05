@@ -15,7 +15,10 @@ on:
       - "scripts/refresh_results.py"
       - ".github/workflows/pages.yml"
   schedule:
-    - cron: "23 14 * * *"
+    - cron: "0 4 * * *"
+      timezone: "America/Chicago"
+    - cron: "23 9 * * *"
+      timezone: "America/Chicago"
   workflow_dispatch:
   workflow_run:
     workflows: ["Oak Production Daily"]
