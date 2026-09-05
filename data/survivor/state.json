@@ -15,12 +15,12 @@
         "future_value": 0.6053
       },
       "alternate": {
-        "team": "LA",
-        "opponent": "SF",
+        "team": "PHI",
+        "opponent": "WAS",
         "location": "vs",
-        "oak_margin": 6.28,
-        "survival_confidence": 0.7244,
-        "future_value": 0.7806
+        "oak_margin": 5.25,
+        "survival_confidence": 0.6918,
+        "future_value": 0.6913
       }
     }
   },
@@ -31,20 +31,20 @@
     "current": {
       "week": 1,
       "primary": {
-        "team": "LA",
-        "opponent": "SF",
-        "location": "vs",
-        "oak_margin": 6.28,
-        "survival_confidence": 0.7244,
-        "future_value": 0.7806
-      },
-      "alternate": {
         "team": "JAX",
         "opponent": "CLE",
         "location": "vs",
         "oak_margin": 5.63,
         "survival_confidence": 0.7041,
         "future_value": 0.6053
+      },
+      "alternate": {
+        "team": "PHI",
+        "opponent": "WAS",
+        "location": "vs",
+        "oak_margin": 5.25,
+        "survival_confidence": 0.6918,
+        "future_value": 0.6913
       }
     }
   }
