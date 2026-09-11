@@ -1,7 +1,22 @@
 {
-  "generated_at": "2026-09-09T13:01:57.404568+00:00",
+  "generated_at": "2026-09-11T13:17:39.088975+00:00",
   "closing_line_source": "nflverse schedules (Pro-Football-Reference)",
-  "weekly": [],
+  "weekly": [
+    {
+      "season": 2026,
+      "week": 1,
+      "games": 2,
+      "su_w": 1,
+      "su_l": 1,
+      "su_p": 0,
+      "ats_w": 0,
+      "ats_l": 1,
+      "ats_p": 1,
+      "ou_w": 0,
+      "ou_l": 2,
+      "ou_p": 0
+    }
+  ],
   "games": [
     {
       "game_id": "2026_01_NE_SEA",
@@ -103,15 +118,15 @@
       "precipitation_in": 0.0,
       "weather_code": 0.0,
       "weather_auto_points": 0.0,
-      "home_score": null,
-      "away_score": null,
-      "closing_spread_line": null,
-      "closing_total_line": null,
-      "final_home_margin": null,
-      "final_total": null,
-      "su_result": "PENDING",
-      "ats_result": "PENDING",
-      "ou_result": "PENDING"
+      "home_score": 13.0,
+      "away_score": 10.0,
+      "closing_spread_line": -3.0,
+      "closing_total_line": 44.5,
+      "final_home_margin": 3.0,
+      "final_total": 23.0,
+      "su_result": "W",
+      "ats_result": "P",
+      "ou_result": "L"
     },
     {
       "game_id": "2026_01_SF_LA",
@@ -213,15 +228,15 @@
       "precipitation_in": null,
       "weather_code": null,
       "weather_auto_points": 0.0,
-      "home_score": null,
-      "away_score": null,
-      "closing_spread_line": null,
-      "closing_total_line": null,
-      "final_home_margin": null,
-      "final_total": null,
-      "su_result": "PENDING",
-      "ats_result": "PENDING",
-      "ou_result": "PENDING"
+      "home_score": 7.0,
+      "away_score": 27.0,
+      "closing_spread_line": -3.5,
+      "closing_total_line": 47.5,
+      "final_home_margin": -20.0,
+      "final_total": 34.0,
+      "su_result": "L",
+      "ats_result": "L",
+      "ou_result": "L"
     },
     {
       "game_id": "2026_01_ATL_PIT",
