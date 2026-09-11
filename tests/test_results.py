@@ -3,7 +3,43 @@ import pandas as pd
 from oak_nfl.results import grade_predictions, summarize_results
 
 
-def test_grade_predictions_uses_closing_lines():
+def test_grade_predictions_uses_frozen_lines():
+    pred = pd.DataFrame(
+        [
+            {
+                "game_id": "g1",
+                "season": 2026,
+                "week": 1,
+                "home_team": "SEA",
+                "away_team": "NE",
+                "predicted_home_margin": 2.364,
+                "predicted_total": 45.91,
+                "spread_line": -3.5,
+                "total_line": 44.5,
+            }
+        ]
+    )
+    finals = pd.DataFrame(
+        [
+            {
+                "game_id": "g1",
+                "home_score": 13,
+                "away_score": 10,
+                "closing_spread_line": -3.0,
+                "closing_total_line": 44.5,
+            }
+        ]
+    )
+    out = grade_predictions(pred, finals).iloc[0]
+    assert out.su_result == "W"
+    assert out.ats_result == "W"
+    assert out.ou_result == "L"
+    assert out.closing_spread_line == -3.5
+    assert out.closing_total_line == 44.5
+    assert out.spread_line == -3.5
+
+
+def test_grade_predictions_falls_back_to_schedule_lines():
     pred = pd.DataFrame(
         [
             {
@@ -14,8 +50,6 @@ def test_grade_predictions_uses_closing_lines():
                 "away_team": "B",
                 "predicted_home_margin": 4.0,
                 "predicted_total": 48.0,
-                "spread_line": -2.5,
-                "total_line": 45.0,
             }
         ]
     )
@@ -31,11 +65,8 @@ def test_grade_predictions_uses_closing_lines():
         ]
     )
     out = grade_predictions(pred, finals).iloc[0]
-    assert out.su_result == "W"
-    assert out.ats_result == "L"
-    assert out.ou_result == "L"
     assert out.closing_spread_line == -3.5
-    assert out.spread_line == -2.5
+    assert out.closing_total_line == 46.5
 
 
 def test_grade_predictions_replaces_schedule_score_columns():
