@@ -13,6 +13,12 @@ def _wl(value: float) -> str:
     return "W" if value > 0 else "L"
 
 
+def _numeric_series(frame: pd.DataFrame, column: str) -> pd.Series:
+    if column not in frame.columns:
+        return pd.Series(np.nan, index=frame.index, dtype="float64")
+    return pd.to_numeric(frame[column], errors="coerce")
+
+
 def grade_predictions(predictions: pd.DataFrame, finals: pd.DataFrame) -> pd.DataFrame:
     """Grade Oak's frozen predictions against final scores and frozen lines.
 
@@ -41,10 +47,10 @@ def grade_predictions(predictions: pd.DataFrame, finals: pd.DataFrame) -> pd.Dat
     )
     out = clean_predictions.merge(finals[cols], on="game_id", how="left", suffixes=("", "_schedule"))
 
-    schedule_spread = pd.to_numeric(out.get("closing_spread_line", np.nan), errors="coerce")
-    schedule_total = pd.to_numeric(out.get("closing_total_line", np.nan), errors="coerce")
-    frozen_spread = pd.to_numeric(out.get("spread_line", np.nan), errors="coerce")
-    frozen_total = pd.to_numeric(out.get("total_line", np.nan), errors="coerce")
+    schedule_spread = _numeric_series(out, "closing_spread_line")
+    schedule_total = _numeric_series(out, "closing_total_line")
+    frozen_spread = _numeric_series(out, "spread_line")
+    frozen_total = _numeric_series(out, "total_line")
     out["closing_spread_line"] = frozen_spread.fillna(schedule_spread)
     out["closing_total_line"] = frozen_total.fillna(schedule_total)
 
