@@ -1,4 +1,4 @@
-"""Grade frozen Oak predictions against final scores and closing market lines."""
+"""Grade frozen Oak predictions against final scores and frozen market lines."""
 from __future__ import annotations
 
 import numpy as np
@@ -13,12 +13,19 @@ def _wl(value: float) -> str:
     return "W" if value > 0 else "L"
 
 
-def grade_predictions(predictions: pd.DataFrame, finals: pd.DataFrame) -> pd.DataFrame:
-    """Grade Oak's frozen predictions against final scores and closing lines.
+def _numeric_series(frame: pd.DataFrame, column: str) -> pd.Series:
+    if column not in frame.columns:
+        return pd.Series(np.nan, index=frame.index, dtype="float64")
+    return pd.to_numeric(frame[column], errors="coerce")
 
-    ``finals`` must provide game_id, home_score, away_score and may provide
-    closing_spread_line / closing_total_line. Closing spread follows Oak's
-    home-team convention: home favorites are negative.
+
+def grade_predictions(predictions: pd.DataFrame, finals: pd.DataFrame) -> pd.DataFrame:
+    """Grade Oak's frozen predictions against final scores and frozen lines.
+
+    The spread/total captured on the frozen prediction card are authoritative
+    for grading. Refreshed schedule lines are retained only as a fallback for
+    older snapshots that do not contain a frozen market line. Spread follows
+    Oak's home-team convention: home favorites are negative.
     """
     required = {"game_id", "home_team", "away_team", "predicted_home_margin", "predicted_total"}
     missing = required.difference(predictions.columns)
@@ -34,20 +41,18 @@ def grade_predictions(predictions: pd.DataFrame, finals: pd.DataFrame) -> pd.Dat
         if col in finals:
             cols.append(col)
 
-    result_cols = [
-        "home_score",
-        "away_score",
-        "closing_spread_line",
-        "closing_total_line",
-    ]
+    result_cols = ["home_score", "away_score"]
     clean_predictions = predictions.drop(
         columns=[col for col in result_cols if col in predictions.columns]
     )
-    out = clean_predictions.merge(finals[cols], on="game_id", how="left")
-    if "closing_spread_line" not in out:
-        out["closing_spread_line"] = np.nan
-    if "closing_total_line" not in out:
-        out["closing_total_line"] = np.nan
+    out = clean_predictions.merge(finals[cols], on="game_id", how="left", suffixes=("", "_schedule"))
+
+    schedule_spread = _numeric_series(out, "closing_spread_line")
+    schedule_total = _numeric_series(out, "closing_total_line")
+    frozen_spread = _numeric_series(out, "spread_line")
+    frozen_total = _numeric_series(out, "total_line")
+    out["closing_spread_line"] = frozen_spread.fillna(schedule_spread)
+    out["closing_total_line"] = frozen_total.fillna(schedule_total)
 
     out["final_home_margin"] = pd.to_numeric(out.home_score, errors="coerce") - pd.to_numeric(out.away_score, errors="coerce")
     out["final_total"] = pd.to_numeric(out.home_score, errors="coerce") + pd.to_numeric(out.away_score, errors="coerce")
