@@ -93,6 +93,28 @@ def _rest_features(games: pd.DataFrame) -> pd.DataFrame:
     return out[["game_id", "rest_diff"]]
 
 
+def _append_slate_dummy_team_games(tg: pd.DataFrame, slate: pd.DataFrame) -> pd.DataFrame:
+    """Add synthetic team-game rows only for slate teams not already in PBP.
+
+    Once a slate game has completed, refreshed play-by-play already contains its
+    team-game rows. Adding another synthetic copy would create duplicate merge
+    keys in ``build_team_weekly_ratings``.
+    """
+    metric_cols = [c for c in tg.columns if c not in {"game_id", "season", "week", "posteam", "defteam"}]
+    existing = set(tg[["game_id", "posteam"]].itertuples(index=False, name=None))
+    dummy = []
+    for row in slate.itertuples(index=False):
+        for offense, defense in ((row.home_team, row.away_team), (row.away_team, row.home_team)):
+            if (row.game_id, offense) in existing:
+                continue
+            d = {"game_id": row.game_id, "season": row.season, "week": row.week, "posteam": offense, "defteam": defense}
+            d.update({c: np.nan for c in metric_cols})
+            dummy.append(d)
+    if not dummy:
+        return tg.copy()
+    return pd.concat([tg, pd.DataFrame(dummy)], ignore_index=True)
+
+
 def build_v12_feature_frame(pbp: pd.DataFrame, slate: pd.DataFrame) -> pd.DataFrame:
     """Build locked V12 training rows plus pregame rows for an upcoming slate."""
     completed = _completed_games(pbp)
@@ -109,14 +131,7 @@ def build_v12_feature_frame(pbp: pd.DataFrame, slate: pd.DataFrame) -> pd.DataFr
     combined = combined.merge(_rolling_scoring(combined), on="game_id", how="left")
 
     tg = build_team_game_features(pbp)
-    dummy = []
-    metric_cols = [c for c in tg.columns if c not in {"game_id", "season", "week", "posteam", "defteam"}]
-    for row in slate.itertuples(index=False):
-        for offense, defense in ((row.home_team, row.away_team), (row.away_team, row.home_team)):
-            d = {"game_id": row.game_id, "season": row.season, "week": row.week, "posteam": offense, "defteam": defense}
-            d.update({c: np.nan for c in metric_cols})
-            dummy.append(d)
-    ratings = build_team_weekly_ratings(pd.concat([tg, pd.DataFrame(dummy)], ignore_index=True))
+    ratings = build_team_weekly_ratings(_append_slate_dummy_team_games(tg, slate))
     core = [c for c in ratings.columns if c.startswith("pregame_")]
     home = ratings.rename(columns={"team": "home_team", **{c: f"home_{c}" for c in core}})
     away = ratings.rename(columns={"team": "away_team", **{c: f"away_{c}" for c in core}})
