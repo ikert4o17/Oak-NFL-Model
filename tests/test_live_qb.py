@@ -34,42 +34,132 @@ def test_confirmed_qb_outs_promote_highest_remaining_depth_chart_qb():
     assert qbs.loc[0, "expected_qb_source"] == "nflverse-depth-chart+espn-out-filter"
 
 
-def test_offseason_departure_invalidates_latest_team_qb_baseline(monkeypatch):
-    monkeypatch.setattr(live_qb, "latest_team_qbs", lambda pbp: pd.DataFrame({"team": ["ATL", "LV"], "baseline_qb_id": ["cousins", "oconnell"], "baseline_qb_name": ["Kirk Cousins", "Aidan O'Connell"]}))
-    depth = pd.DataFrame({"dt": ["2026-09-12"] * 4, "team": ["ATL", "ATL", "LV", "LV"], "player_name": ["Tua Tagovailoa", "Cooper Rush", "Kirk Cousins", "Fernando Mendoza"], "gsis_id": ["tua", "rush", "cousins", "mendoza"], "pos_abb": ["QB"] * 4, "pos_rank": [1, 2, 1, 2]})
-    out = live_qb.roster_validated_team_qbs(pd.DataFrame(), depth)
+def test_embedded_baseline_does_not_flip_to_backup_after_one_split_game(monkeypatch):
+    games = pd.DataFrame(
+        {
+            "game_id": ["g1", "g2", "g2"],
+            "season": [2026, 2026, 2026],
+            "week": [1, 2, 2],
+            "posteam": ["SEA", "SEA", "SEA"],
+            "passer_player_id": ["darnold", "darnold", "lock"],
+            "passer_player_name": ["Sam Darnold", "Sam Darnold", "Drew Lock"],
+            "qb_dropbacks": [30, 2, 28],
+            "qb_epa_per_dropback": [0.20, 0.20, -0.10],
+            "qb_cpoe": [0.0, 0.0, 0.0],
+            "qb_sack_rate": [0.0, 0.0, 0.0],
+        }
+    )
+    monkeypatch.setattr(live_qb, "build_qb_game_efficiency", lambda pbp: games)
+
+    out = live_qb.embedded_team_qb_values(pd.DataFrame(), prior_dropbacks=0.0, recency_decay=0.92)
+    sea = out.loc[out["team"].eq("SEA")].iloc[0]
+
+    # Lock handled almost all of the latest game, but the embedded team baseline
+    # still retains the prior Darnold-heavy game instead of becoming Lock outright.
+    assert sea["baseline_qb_name"] == "Embedded team QB"
+    assert sea["baseline_qb_epa"] > 0.0
+    assert sea["baseline_qb_source"] == "recency-dropback-weighted-team-qb"
+
+
+def test_offseason_departure_remains_only_as_part_of_team_embedded_value(monkeypatch):
+    games = pd.DataFrame(
+        {
+            "game_id": ["g1", "g2"],
+            "season": [2025, 2025],
+            "week": [17, 18],
+            "posteam": ["ATL", "ATL"],
+            "passer_player_id": ["cousins", "cousins"],
+            "passer_player_name": ["Kirk Cousins", "Kirk Cousins"],
+            "qb_dropbacks": [35, 35],
+            "qb_epa_per_dropback": [0.08, 0.02],
+            "qb_cpoe": [0.0, 0.0],
+            "qb_sack_rate": [0.0, 0.0],
+        }
+    )
+    monkeypatch.setattr(live_qb, "build_qb_game_efficiency", lambda pbp: games)
+
+    out = live_qb.embedded_team_qb_values(pd.DataFrame(), prior_dropbacks=0.0)
     atl = out.loc[out["team"].eq("ATL")].iloc[0]
-    lv = out.loc[out["team"].eq("LV")].iloc[0]
+
+    assert atl["baseline_qb_name"] == "Embedded team QB"
     assert pd.isna(atl["baseline_qb_id"])
-    assert pd.isna(atl["baseline_qb_name"])
-    assert pd.isna(lv["baseline_qb_id"])
+    assert atl["baseline_qb_epa"] > 0.0
 
 
-def test_current_roster_qb_remains_valid_baseline(monkeypatch):
-    monkeypatch.setattr(live_qb, "latest_team_qbs", lambda pbp: pd.DataFrame({"team": ["SEA"], "baseline_qb_id": ["darnold"], "baseline_qb_name": ["Sam Darnold"]}))
-    depth = pd.DataFrame({"dt": ["2026-09-12"], "team": ["SEA"], "player_name": ["Sam Darnold"], "gsis_id": ["darnold"], "pos_abb": ["QB"], "pos_rank": [1]})
-    out = live_qb.roster_validated_team_qbs(pd.DataFrame(), depth)
-    assert out.loc[0, "baseline_qb_id"] == "darnold"
-    assert out.loc[0, "baseline_qb_name"] == "Sam Darnold"
-
-
-def test_live_qb_inputs_compare_expected_to_latest_team_starter(monkeypatch):
-    monkeypatch.setattr(live_qb, "roster_validated_team_qbs", lambda pbp, depth: pd.DataFrame({"team": ["SEA", "NE"], "baseline_qb_id": ["sea_old", "ne_qb"], "baseline_qb_name": ["Seattle Old", "New England QB"]}))
-    monkeypatch.setattr(live_qb, "current_qb_epa_ratings", lambda pbp: pd.DataFrame({"qb_id": ["sea_old", "sea_new", "ne_qb"], "qb_name": ["Seattle Old", "Seattle New", "New England QB"], "current_qb_epa": [0.15, -0.05, 0.10], "prior_qb_dropbacks": [500.0, 150.0, 400.0]}))
-    depth = pd.DataFrame({"dt": ["2026-09-03", "2026-09-03"], "team": ["SEA", "NE"], "player_name": ["Seattle New", "New England QB"], "gsis_id": ["sea_new", "ne_qb"], "pos_abb": ["QB", "QB"], "pos_rank": [1, 1]})
+def test_live_qb_inputs_compare_expected_to_embedded_team_value(monkeypatch):
+    monkeypatch.setattr(
+        live_qb,
+        "embedded_team_qb_values",
+        lambda pbp: pd.DataFrame(
+            {
+                "team": ["SEA", "NE"],
+                "baseline_qb_epa": [0.05, 0.10],
+                "baseline_qb_name": ["Embedded team QB", "Embedded team QB"],
+                "baseline_qb_id": [pd.NA, pd.NA],
+                "baseline_qb_source": ["recency-dropback-weighted-team-qb"] * 2,
+            }
+        ),
+    )
+    monkeypatch.setattr(
+        live_qb,
+        "current_qb_epa_ratings",
+        lambda pbp: pd.DataFrame(
+            {
+                "qb_id": ["lock", "ne_qb"],
+                "qb_name": ["Drew Lock", "New England QB"],
+                "current_qb_epa": [-0.05, 0.10],
+                "prior_qb_dropbacks": [150.0, 400.0],
+            }
+        ),
+    )
+    depth = pd.DataFrame(
+        {
+            "dt": ["2026-09-03", "2026-09-03"],
+            "team": ["SEA", "NE"],
+            "player_name": ["Drew Lock", "New England QB"],
+            "gsis_id": ["lock", "ne_qb"],
+            "pos_abb": ["QB", "QB"],
+            "pos_rank": [1, 1],
+        }
+    )
     slate = pd.DataFrame({"game_id": ["g1"], "home_team": ["SEA"], "away_team": ["NE"]})
     out = live_qb.build_live_qb_inputs(pd.DataFrame(), slate, depth)
-    assert out.loc[0, "home_expected_qb_name"] == "Seattle New"
-    assert out.loc[0, "home_baseline_qb_name"] == "Seattle Old"
+
+    assert out.loc[0, "home_expected_qb_name"] == "Drew Lock"
+    assert out.loc[0, "home_baseline_qb_name"] == "Embedded team QB"
     assert out.loc[0, "home_expected_qb_epa"] == -0.05
-    assert out.loc[0, "home_baseline_qb_epa"] == 0.15
+    assert out.loc[0, "home_baseline_qb_epa"] == 0.05
     assert qb_change_points(out.loc[0, "home_expected_qb_epa"], out.loc[0, "home_baseline_qb_epa"]) < 0
+    assert out.loc[0, "home_baseline_qb_source"] == "recency-dropback-weighted-team-qb"
     assert out.loc[0, "away_expected_qb_epa"] == out.loc[0, "away_baseline_qb_epa"]
 
 
 def test_missing_depth_chart_context_fails_safe_to_zero(monkeypatch):
-    monkeypatch.setattr(live_qb, "roster_validated_team_qbs", lambda pbp, depth: pd.DataFrame({"team": ["SEA"], "baseline_qb_id": ["sea_qb"], "baseline_qb_name": ["SEA QB"]}))
-    monkeypatch.setattr(live_qb, "current_qb_epa_ratings", lambda pbp: pd.DataFrame({"qb_id": ["sea_qb"], "qb_name": ["SEA QB"], "current_qb_epa": [0.1], "prior_qb_dropbacks": [400.0]}))
+    monkeypatch.setattr(
+        live_qb,
+        "embedded_team_qb_values",
+        lambda pbp: pd.DataFrame(
+            {
+                "team": ["SEA"],
+                "baseline_qb_epa": [0.1],
+                "baseline_qb_name": ["Embedded team QB"],
+                "baseline_qb_id": [pd.NA],
+                "baseline_qb_source": ["recency-dropback-weighted-team-qb"],
+            }
+        ),
+    )
+    monkeypatch.setattr(
+        live_qb,
+        "current_qb_epa_ratings",
+        lambda pbp: pd.DataFrame(
+            {
+                "qb_id": ["sea_qb"],
+                "qb_name": ["SEA QB"],
+                "current_qb_epa": [0.1],
+                "prior_qb_dropbacks": [400.0],
+            }
+        ),
+    )
     slate = pd.DataFrame({"game_id": ["g1"], "home_team": ["SEA"], "away_team": ["NE"]})
     out = live_qb.build_live_qb_inputs(pd.DataFrame(), slate, pd.DataFrame())
     assert np.isnan(out.loc[0, "home_expected_qb_epa"])
