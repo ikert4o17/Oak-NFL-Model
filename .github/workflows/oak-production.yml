@@ -56,9 +56,14 @@ jobs:
       - name: Build dashboard and Survivor data
         run: |
           latest=$(ls -t data/predictions/oak_*.csv | head -1)
-          python scripts/build_dashboard_data.py "$latest"
           season=$(python -c 'import pandas as pd,sys; d=pd.read_csv(sys.argv[1]); print(int(d.iloc[0].season))' "$latest")
           week=$(python -c 'import pandas as pd,sys; d=pd.read_csv(sys.argv[1]); print(int(d.iloc[0].week))' "$latest")
+          live="data/previews/oak_${season}_week_${week}_live.csv"
+          dashboard="$latest"
+          if [ -f "$live" ]; then
+            dashboard="$live"
+          fi
+          python scripts/build_dashboard_data.py "$dashboard"
           python scripts/build_power_ratings.py --season "$season" --week "$week"
           python scripts/build_survivor_data.py "$latest"
 
