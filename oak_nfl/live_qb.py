@@ -9,7 +9,7 @@ import pandas as pd
 
 from oak_nfl.data.depth_charts import expected_starting_qbs, normalize_depth_charts
 from oak_nfl.data.injuries import latest_weekly_status
-from oak_nfl.qb import build_qb_game_efficiency, identify_game_qbs
+from oak_nfl.qb import build_qb_game_efficiency
 
 
 def _league_prior(qb_games: pd.DataFrame) -> float:
@@ -31,15 +31,7 @@ def expected_starting_qbs_with_availability(
     depth_charts: pd.DataFrame,
     injury_report: pd.DataFrame | None = None,
 ) -> pd.DataFrame:
-    """Select each team's expected QB after confirmed-out availability filtering.
-
-    nflverse remains the ranking source. ESPN injury context is only allowed to
-    remove quarterbacks whose latest weekly status is explicitly ``out``. It does
-    not demote questionable/doubtful/limited players and does not infer a starter
-    from news. If filtering removes QB1, the highest-ranked remaining depth-chart
-    QB is promoted. If no eligible QB remains, the team is omitted so Oak's
-    validated QB adjustment safely resolves to zero rather than guessing.
-    """
+    """Select each team's expected QB after confirmed-out availability filtering."""
     if injury_report is None or injury_report.empty:
         out = expected_starting_qbs(depth_charts).copy()
         if not out.empty:
@@ -47,31 +39,21 @@ def expected_starting_qbs_with_availability(
         return out
 
     depth = normalize_depth_charts(depth_charts)
+    columns = [
+        "team",
+        "expected_qb_name",
+        "expected_qb_id",
+        "depth_chart_date",
+        "depth_rank",
+        "expected_qb_source",
+    ]
     if depth.empty:
-        return pd.DataFrame(
-            columns=[
-                "team",
-                "expected_qb_name",
-                "expected_qb_id",
-                "depth_chart_date",
-                "depth_rank",
-                "expected_qb_source",
-            ]
-        )
+        return pd.DataFrame(columns=columns)
 
     position = depth["position"].fillna("")
     qbs = depth.loc[position.eq("QB") | position.str.contains("QUARTERBACK", regex=False)].copy()
     if qbs.empty:
-        return pd.DataFrame(
-            columns=[
-                "team",
-                "expected_qb_name",
-                "expected_qb_id",
-                "depth_chart_date",
-                "depth_rank",
-                "expected_qb_source",
-            ]
-        )
+        return pd.DataFrame(columns=columns)
 
     if qbs["snapshot_date"].notna().any():
         newest = qbs.groupby("team")["snapshot_date"].transform("max")
@@ -120,12 +102,7 @@ def current_qb_epa_ratings(
     prior_dropbacks: float = 150.0,
     recency_decay: float = 0.92,
 ) -> pd.DataFrame:
-    """Estimate each QB's current EPA/dropback using completed games only.
-
-    This mirrors the already-researched QB rating philosophy: player-game history
-    is recency weighted and regressed toward the latest completed season's league
-    level. It is context generation, not a new fitted model.
-    """
+    """Estimate each QB's current EPA/dropback using completed games only."""
     games = build_qb_game_efficiency(pbp).sort_values(["season", "week", "game_id"])
     if games.empty:
         return pd.DataFrame(columns=["qb_id", "qb_name", "current_qb_epa", "prior_qb_dropbacks"])
@@ -152,20 +129,74 @@ def current_qb_epa_ratings(
     return pd.DataFrame(rows)
 
 
-def latest_team_qbs(pbp: pd.DataFrame) -> pd.DataFrame:
-    """Return each team's primary QB from its latest completed game."""
-    starters = identify_game_qbs(pbp)
-    if starters.empty:
-        return pd.DataFrame(columns=["team", "baseline_qb_id", "baseline_qb_name"])
-    starters = starters.sort_values(["season", "week", "game_id"])
-    latest = starters.drop_duplicates("posteam", keep="last")
-    return latest.rename(
-        columns={
-            "posteam": "team",
-            "passer_player_id": "baseline_qb_id",
-            "passer_player_name": "baseline_qb_name",
-        }
-    )[["team", "baseline_qb_id", "baseline_qb_name"]].reset_index(drop=True)
+def embedded_team_qb_values(
+    pbp: pd.DataFrame,
+    *,
+    prior_dropbacks: float = 150.0,
+    recency_decay: float = 0.92,
+) -> pd.DataFrame:
+    """Estimate the QB value embedded in each team's recent performance.
+
+    The live adjustment should compare the upcoming starter to the quarterback
+    contribution already present in the team rating, not merely to whichever QB
+    handled the most dropbacks in the latest game. We therefore aggregate every
+    completed QB game for the team, weight each contribution by dropbacks and game
+    recency, and regress the result toward the same league prior used by the
+    individual-QB ratings.
+
+    This naturally handles split games, mid-game injuries, multi-QB seasons and
+    offseason roster turnover. A backup finishing one game cannot instantly become
+    the entire baseline, while departed quarterbacks remain represented only to the
+    extent their historical play is still part of the team's recent performance.
+    """
+    games = build_qb_game_efficiency(pbp).sort_values(["posteam", "season", "week", "game_id"])
+    if games.empty:
+        return pd.DataFrame(
+            columns=["team", "baseline_qb_epa", "baseline_qb_name", "baseline_qb_id", "baseline_qb_source"]
+        )
+
+    prior = _league_prior(games)
+    game_order = (
+        games[["posteam", "season", "week", "game_id"]]
+        .drop_duplicates()
+        .sort_values(["posteam", "season", "week", "game_id"])
+        .copy()
+    )
+    game_order["team_game_index"] = game_order.groupby("posteam").cumcount()
+    game_order["team_game_max"] = game_order.groupby("posteam")["team_game_index"].transform("max")
+    game_order["game_age"] = game_order["team_game_max"] - game_order["team_game_index"]
+
+    weighted = games.merge(
+        game_order[["posteam", "season", "week", "game_id", "game_age"]],
+        on=["posteam", "season", "week", "game_id"],
+        how="left",
+        validate="many_to_one",
+    )
+    weighted["qb_dropbacks"] = pd.to_numeric(weighted["qb_dropbacks"], errors="coerce").fillna(0.0)
+    weighted["qb_epa_per_dropback"] = pd.to_numeric(
+        weighted["qb_epa_per_dropback"], errors="coerce"
+    ).fillna(prior)
+    weighted["embedded_weight"] = (
+        np.power(recency_decay, pd.to_numeric(weighted["game_age"], errors="coerce").fillna(0.0))
+        * weighted["qb_dropbacks"]
+    )
+    weighted["weighted_epa"] = weighted["embedded_weight"] * weighted["qb_epa_per_dropback"]
+
+    rows: list[dict[str, object]] = []
+    for team, group in weighted.groupby("posteam"):
+        total = float(group["embedded_weight"].sum())
+        observed = float(group["weighted_epa"].sum() / total) if total > 0 else prior
+        rating = (prior_dropbacks * prior + total * observed) / (prior_dropbacks + total)
+        rows.append(
+            {
+                "team": team,
+                "baseline_qb_epa": float(rating),
+                "baseline_qb_name": "Embedded team QB",
+                "baseline_qb_id": pd.NA,
+                "baseline_qb_source": "recency-dropback-weighted-team-qb",
+            }
+        )
+    return pd.DataFrame(rows)
 
 
 def build_live_qb_inputs(
@@ -174,17 +205,9 @@ def build_live_qb_inputs(
     depth_charts: pd.DataFrame,
     injury_report: pd.DataFrame | None = None,
 ) -> pd.DataFrame:
-    """Build game-level expected-vs-baseline QB EPA inputs.
-
-    Expected QBs come from the newest available depth chart, with only confirmed
-    ``out`` QB statuses allowed to remove stale depth-chart starters. Baseline QBs
-    are the team's primary passer in its latest completed game, which is the safest
-    proxy for the QB already embedded in V5 team performance. Missing context is
-    left as NaN so Oak's validated adjustment safely resolves to zero rather than
-    guessing.
-    """
+    """Build game-level expected-vs-embedded QB EPA inputs."""
     expected = expected_starting_qbs_with_availability(depth_charts, injury_report)
-    baseline = latest_team_qbs(pbp)
+    baseline = embedded_team_qb_values(pbp)
     ratings = current_qb_epa_ratings(pbp)
 
     expected = expected.merge(
@@ -195,23 +218,17 @@ def build_live_qb_inputs(
     ).drop(columns=["qb_id"], errors="ignore")
     expected = expected.rename(columns={"current_qb_epa": "expected_qb_epa"})
 
-    baseline = baseline.merge(
-        ratings[["qb_id", "current_qb_epa"]],
-        left_on="baseline_qb_id",
-        right_on="qb_id",
-        how="left",
-    ).drop(columns=["qb_id"], errors="ignore")
-    baseline = baseline.rename(columns={"current_qb_epa": "baseline_qb_epa"})
-
     team_context = baseline.merge(expected, on="team", how="outer")
+    has_expected = team_context["expected_qb_id"].notna() & team_context["expected_qb_epa"].notna()
+    has_baseline = team_context["baseline_qb_epa"].notna()
     team_context["qb_context_confidence"] = np.where(
-        team_context["expected_qb_id"].notna() & team_context["baseline_qb_id"].notna(),
+        has_expected & has_baseline,
         np.where(
             team_context.get("expected_qb_source", pd.Series(index=team_context.index, dtype="object"))
             .fillna("")
             .eq("nflverse-depth-chart+espn-out-filter"),
-            "availability-filtered",
-            "depth-chart",
+            "availability-filtered+embedded-baseline",
+            "depth-chart+embedded-baseline",
         ),
         "missing",
     )
@@ -230,11 +247,8 @@ def build_live_qb_inputs(
             item[f"{side}_expected_qb_name"] = context["expected_qb_name"] if context is not None else pd.NA
             item[f"{side}_baseline_qb_name"] = context["baseline_qb_name"] if context is not None else pd.NA
             item[f"{side}_depth_chart_date"] = context["depth_chart_date"] if context is not None else pd.NaT
-            item[f"{side}_qb_context_source"] = (
-                context.get("expected_qb_source", pd.NA) if context is not None else pd.NA
-            )
-            item[f"{side}_qb_context_confidence"] = (
-                context["qb_context_confidence"] if context is not None else "missing"
-            )
+            item[f"{side}_qb_context_source"] = context.get("expected_qb_source", pd.NA) if context is not None else pd.NA
+            item[f"{side}_baseline_qb_source"] = context.get("baseline_qb_source", pd.NA) if context is not None else pd.NA
+            item[f"{side}_qb_context_confidence"] = context["qb_context_confidence"] if context is not None else "missing"
         rows.append(item)
     return pd.DataFrame(rows)
