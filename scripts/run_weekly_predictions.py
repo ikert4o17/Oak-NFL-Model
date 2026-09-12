@@ -69,7 +69,11 @@ def main() -> None:
     parser.add_argument("--week", type=int)
     parser.add_argument("--auto", action="store_true")
     parser.add_argument("--refresh-schedule", action="store_true")
-    parser.add_argument("--live-qb", action="store_true", help="Apply current nflverse depth-chart QB context")
+    parser.add_argument(
+        "--live-qb",
+        action="store_true",
+        help="Apply nflverse depth-chart QB context filtered by confirmed ESPN QB outs",
+    )
     parser.add_argument("--live-injuries", action="store_true", help="Add informational ESPN injury-report context without changing model points")
     parser.add_argument("--live-weather", action="store_true", help="Add informational pregame weather context without changing model points")
     parser.add_argument("--freeze", action="store_true", help="Never overwrite an existing season/week snapshot")
@@ -106,14 +110,24 @@ def main() -> None:
     pbp: pd.DataFrame | None = None
     live_card: pd.DataFrame | None = None
     qb_inputs: pd.DataFrame | None = None
+    injury_report = pd.DataFrame(columns=CANONICAL_COLUMNS)
     live_context_requested = args.live_qb or args.live_injuries or args.live_weather
 
     if live_context_requested:
         pbp = _load_history(season)
 
+        # The QB layer also consumes confirmed-out statuses so a stale depth chart
+        # cannot keep an officially unavailable QB1 in the live preview.
+        if args.live_qb or args.live_injuries:
+            try:
+                injury_report = fetch_espn_injuries(season=season, week=week)
+            except Exception as exc:
+                print(f"Live injury availability unavailable; continuing safely: {exc}")
+                injury_report = pd.DataFrame(columns=CANONICAL_COLUMNS)
+
         if args.live_qb:
             depth = load_depth_charts(season)
-            qb_inputs = build_live_qb_inputs(pbp, slate, depth)
+            qb_inputs = build_live_qb_inputs(pbp, slate, depth, injury_report=injury_report)
             qb_output = context_dir / f"oak_{season}_week_{week}_qb.csv"
             qb_inputs.to_csv(qb_output, index=False)
             print(f"Saved live QB context {qb_output}")
@@ -121,12 +135,6 @@ def main() -> None:
         live_card = run_weekly_predictions(pbp, slate, qb_inputs=qb_inputs)
 
         if args.live_injuries:
-            try:
-                injury_report = fetch_espn_injuries(season=season, week=week)
-            except Exception as exc:
-                print(f"Live injury context unavailable; continuing safely: {exc}")
-                injury_report = pd.DataFrame(columns=CANONICAL_COLUMNS)
-
             injury_output = context_dir / f"oak_{season}_week_{week}_injuries.csv"
             injury_report.to_csv(injury_output, index=False)
             print(f"Saved live injury context {injury_output}")
