@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
+import re
+
 import numpy as np
 import pandas as pd
 
-from oak_nfl.data.depth_charts import expected_starting_qbs
+from oak_nfl.data.depth_charts import expected_starting_qbs, normalize_depth_charts
+from oak_nfl.data.injuries import latest_weekly_status
 from oak_nfl.qb import build_qb_game_efficiency, identify_game_qbs
 
 
@@ -15,6 +18,100 @@ def _league_prior(qb_games: pd.DataFrame) -> float:
     latest_season = int(pd.to_numeric(qb_games["season"], errors="coerce").max())
     prior = qb_games.loc[qb_games["season"].eq(latest_season), "qb_epa_per_dropback"].mean()
     return float(prior) if pd.notna(prior) else 0.0
+
+
+def _player_name_key(value: object) -> str:
+    """Normalize player names for conservative cross-provider matching."""
+    if pd.isna(value):
+        return ""
+    return re.sub(r"[^a-z0-9]", "", str(value).lower())
+
+
+def expected_starting_qbs_with_availability(
+    depth_charts: pd.DataFrame,
+    injury_report: pd.DataFrame | None = None,
+) -> pd.DataFrame:
+    """Select each team's expected QB after confirmed-out availability filtering.
+
+    nflverse remains the ranking source. ESPN injury context is only allowed to
+    remove quarterbacks whose latest weekly status is explicitly ``out``. It does
+    not demote questionable/doubtful/limited players and does not infer a starter
+    from news. If filtering removes QB1, the highest-ranked remaining depth-chart
+    QB is promoted. If no eligible QB remains, the team is omitted so Oak's
+    validated QB adjustment safely resolves to zero rather than guessing.
+    """
+    if injury_report is None or injury_report.empty:
+        out = expected_starting_qbs(depth_charts).copy()
+        if not out.empty:
+            out["expected_qb_source"] = "nflverse-depth-chart"
+        return out
+
+    depth = normalize_depth_charts(depth_charts)
+    if depth.empty:
+        return pd.DataFrame(
+            columns=[
+                "team",
+                "expected_qb_name",
+                "expected_qb_id",
+                "depth_chart_date",
+                "depth_rank",
+                "expected_qb_source",
+            ]
+        )
+
+    position = depth["position"].fillna("")
+    qbs = depth.loc[position.eq("QB") | position.str.contains("QUARTERBACK", regex=False)].copy()
+    if qbs.empty:
+        return pd.DataFrame(
+            columns=[
+                "team",
+                "expected_qb_name",
+                "expected_qb_id",
+                "depth_chart_date",
+                "depth_rank",
+                "expected_qb_source",
+            ]
+        )
+
+    if qbs["snapshot_date"].notna().any():
+        newest = qbs.groupby("team")["snapshot_date"].transform("max")
+        qbs = qbs.loc[qbs["snapshot_date"].eq(newest)].copy()
+
+    qbs["depth_rank"] = qbs["depth_rank"].fillna(9999)
+    qbs = qbs.sort_values(["team", "depth_rank", "player_name"])
+    original_qb1 = qbs.drop_duplicates("team", keep="first").set_index("team")["player_name"]
+
+    statuses = latest_weekly_status(injury_report)
+    unavailable = statuses.loc[
+        statuses["position_group"].eq("QB") & statuses["status"].eq("out"),
+        ["team", "player_name"],
+    ].copy()
+    unavailable["name_key"] = unavailable["player_name"].map(_player_name_key)
+    unavailable_keys = set(zip(unavailable["team"], unavailable["name_key"]))
+
+    qbs["name_key"] = qbs["player_name"].map(_player_name_key)
+    qbs = qbs.loc[
+        ~qbs.apply(lambda row: (row["team"], row["name_key"]) in unavailable_keys, axis=1)
+    ].copy()
+    qbs = qbs.drop_duplicates("team", keep="first")
+
+    out = qbs.rename(
+        columns={
+            "player_name": "expected_qb_name",
+            "player_id": "expected_qb_id",
+            "snapshot_date": "depth_chart_date",
+        }
+    )[["team", "expected_qb_name", "expected_qb_id", "depth_chart_date", "depth_rank"]].reset_index(drop=True)
+    out["expected_qb_source"] = out.apply(
+        lambda row: (
+            "nflverse-depth-chart+espn-out-filter"
+            if row["team"] in original_qb1.index
+            and _player_name_key(row["expected_qb_name"]) != _player_name_key(original_qb1.loc[row["team"]])
+            else "nflverse-depth-chart"
+        ),
+        axis=1,
+    )
+    return out
 
 
 def current_qb_epa_ratings(
@@ -75,15 +172,18 @@ def build_live_qb_inputs(
     pbp: pd.DataFrame,
     slate: pd.DataFrame,
     depth_charts: pd.DataFrame,
+    injury_report: pd.DataFrame | None = None,
 ) -> pd.DataFrame:
     """Build game-level expected-vs-baseline QB EPA inputs.
 
-    Expected QBs come from the newest available depth chart. Baseline QBs are the
-    team's primary passer in its latest completed game, which is the safest proxy
-    for the QB already embedded in V5 team performance. Missing context is left as
-    NaN so Oak's validated adjustment safely resolves to zero rather than guessing.
+    Expected QBs come from the newest available depth chart, with only confirmed
+    ``out`` QB statuses allowed to remove stale depth-chart starters. Baseline QBs
+    are the team's primary passer in its latest completed game, which is the safest
+    proxy for the QB already embedded in V5 team performance. Missing context is
+    left as NaN so Oak's validated adjustment safely resolves to zero rather than
+    guessing.
     """
-    expected = expected_starting_qbs(depth_charts)
+    expected = expected_starting_qbs_with_availability(depth_charts, injury_report)
     baseline = latest_team_qbs(pbp)
     ratings = current_qb_epa_ratings(pbp)
 
@@ -104,10 +204,15 @@ def build_live_qb_inputs(
     baseline = baseline.rename(columns={"current_qb_epa": "baseline_qb_epa"})
 
     team_context = baseline.merge(expected, on="team", how="outer")
-    team_context["qb_context_source"] = "nflverse depth charts + completed nflverse PBP"
     team_context["qb_context_confidence"] = np.where(
         team_context["expected_qb_id"].notna() & team_context["baseline_qb_id"].notna(),
-        "depth-chart",
+        np.where(
+            team_context.get("expected_qb_source", pd.Series(index=team_context.index, dtype="object"))
+            .fillna("")
+            .eq("nflverse-depth-chart+espn-out-filter"),
+            "availability-filtered",
+            "depth-chart",
+        ),
         "missing",
     )
 
@@ -125,6 +230,9 @@ def build_live_qb_inputs(
             item[f"{side}_expected_qb_name"] = context["expected_qb_name"] if context is not None else pd.NA
             item[f"{side}_baseline_qb_name"] = context["baseline_qb_name"] if context is not None else pd.NA
             item[f"{side}_depth_chart_date"] = context["depth_chart_date"] if context is not None else pd.NaT
+            item[f"{side}_qb_context_source"] = (
+                context.get("expected_qb_source", pd.NA) if context is not None else pd.NA
+            )
             item[f"{side}_qb_context_confidence"] = (
                 context["qb_context_confidence"] if context is not None else "missing"
             )
