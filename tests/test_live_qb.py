@@ -41,6 +41,42 @@ def test_legacy_depth_chart_schema_still_normalizes():
     assert out.loc[0, "depth_rank"] == 1
 
 
+def test_confirmed_qb_outs_promote_highest_remaining_depth_chart_qb():
+    depth = pd.DataFrame(
+        {
+            "dt": ["2026-09-12 11:36:06+00:00"] * 3,
+            "team": ["ATL", "ATL", "ATL"],
+            "player_name": ["Tua Tagovailoa", "Michael Penix Jr.", "Cooper Rush"],
+            "gsis_id": ["tua", "penix", "rush"],
+            "pos_abb": ["QB", "QB", "QB"],
+            "pos_rank": [1, 2, 3],
+        }
+    )
+    injuries = pd.DataFrame(
+        {
+            "season": [2026, 2026, 2026],
+            "week": [1, 1, 1],
+            "team": ["ATL", "ATL", "ATL"],
+            "player_id": [pd.NA, pd.NA, pd.NA],
+            "player_name": ["Tua Tagovailoa", "Michael Penix Jr.", "Cooper Rush"],
+            "position_group": ["QB", "QB", "QB"],
+            "status": ["out", "out", "questionable"],
+            "report_date": pd.to_datetime(
+                ["2026-09-11T17:36:00Z", "2026-09-11T17:55:00Z", "2026-09-12T20:08:00Z"]
+            ),
+            "source": ["espn", "espn", "espn"],
+        }
+    )
+
+    qbs = live_qb.expected_starting_qbs_with_availability(depth, injuries)
+
+    assert len(qbs) == 1
+    assert qbs.loc[0, "expected_qb_name"] == "Cooper Rush"
+    assert qbs.loc[0, "expected_qb_id"] == "rush"
+    assert qbs.loc[0, "depth_rank"] == 3
+    assert qbs.loc[0, "expected_qb_source"] == "nflverse-depth-chart+espn-out-filter"
+
+
 def test_live_qb_inputs_compare_expected_to_latest_team_starter(monkeypatch):
     monkeypatch.setattr(
         live_qb,
