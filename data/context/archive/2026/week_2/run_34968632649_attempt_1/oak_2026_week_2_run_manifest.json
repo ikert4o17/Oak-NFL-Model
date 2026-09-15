@@ -1,0 +1,36 @@
+{
+  "archive": {
+    "directory": "data/context/archive/2026/week_2/run_34968632649_attempt_1",
+    "files": {
+      "injuries": "data/context/archive/2026/week_2/run_34968632649_attempt_1/oak_2026_week_2_injuries.csv",
+      "preview": "data/context/archive/2026/week_2/run_34968632649_attempt_1/oak_2026_week_2_live.csv",
+      "qb": "data/context/archive/2026/week_2/run_34968632649_attempt_1/oak_2026_week_2_qb.csv",
+      "weather": "data/context/archive/2026/week_2/run_34968632649_attempt_1/oak_2026_week_2_weather.csv"
+    }
+  },
+  "frozen_card": {
+    "action": "created_or_updated",
+    "existed_before_run": false,
+    "freeze_requested": true,
+    "path": "data/predictions/oak_2026_week_2.csv"
+  },
+  "generated_at_utc": "2026-09-15T12:24:41.601839Z",
+  "github": {
+    "run_attempt": "1",
+    "run_id": "34968632649",
+    "sha": "6df66c113f073a50aecf739d5a173cc01efc6544",
+    "workflow": "Oak Production Daily"
+  },
+  "live_context": {
+    "injuries_requested": true,
+    "injury_context_path": "data/context/oak_2026_week_2_injuries.csv",
+    "preview_path": "data/previews/oak_2026_week_2_live.csv",
+    "qb_context_path": "data/context/oak_2026_week_2_qb.csv",
+    "qb_requested": true,
+    "weather_context_path": "data/context/oak_2026_week_2_weather.csv",
+    "weather_requested": true
+  },
+  "schema_version": 1,
+  "season": 2026,
+  "week": 2
+}

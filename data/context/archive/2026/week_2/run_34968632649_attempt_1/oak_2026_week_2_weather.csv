@@ -1,0 +1,17 @@
+game_id,home_team,away_team,location,roof,surface,stadium,weather_available,weather_source,forecast_time_utc,temperature_f,wind_mph,wind_gust_mph,precipitation_probability_pct,precipitation_in,weather_code,weather_auto_points
+2026_02_DET_BUF,BUF,DET,Home,outdoors,a_turf,Highmark Stadium,True,open-meteo,2026-09-18 00:00:00+00:00,64.4,2.6,2.2,14,0.0,0,0.0
+2026_02_CAR_ATL,ATL,CAR,Home,,fieldturf,Mercedes-Benz Stadium,True,open-meteo,2026-09-20 17:00:00+00:00,87.3,4.3,5.1,7,0.0,0,0.0
+2026_02_CIN_HOU,HOU,CIN,Home,,astroturf,Reliant Stadium,True,open-meteo,2026-09-20 17:00:00+00:00,92.8,4.4,5.4,3,0.0,0,0.0
+2026_02_CLE_TB,TB,CLE,Home,outdoors,grass,Raymond James Stadium,True,open-meteo,2026-09-20 17:00:00+00:00,89.5,6.9,8.7,16,0.0,1,0.0
+2026_02_GB_NYJ,NYJ,GB,Home,outdoors,fieldturf,MetLife Stadium,True,open-meteo,2026-09-20 17:00:00+00:00,70.2,8.6,20.6,37,0.016,51,0.0
+2026_02_MIN_CHI,CHI,MIN,Home,outdoors,grass,Soldier Field,True,open-meteo,2026-09-20 17:00:00+00:00,68.0,4.7,14.1,35,0.008,51,0.0
+2026_02_NO_BAL,BAL,NO,Home,outdoors,grass,M&T Bank Stadium,True,open-meteo,2026-09-20 17:00:00+00:00,84.7,6.7,12.1,9,0.0,3,0.0
+2026_02_PHI_TEN,TEN,PHI,Home,outdoors,grass,Nissan Stadium,True,open-meteo,2026-09-20 17:00:00+00:00,92.6,6.8,8.7,4,0.0,3,0.0
+2026_02_PIT_NE,NE,PIT,Home,outdoors,fieldturf,Gillette Stadium,True,open-meteo,2026-09-20 17:00:00+00:00,62.8,7.4,19.0,40,0.035,53,0.0
+2026_02_JAX_DEN,DEN,JAX,Home,outdoors,grass,Empower Field at Mile High,True,open-meteo,2026-09-20 20:00:00+00:00,73.8,7.2,5.4,30,0.0,0,0.0
+2026_02_LV_LAC,LAC,LV,Home,dome,matrixturf,SoFi Stadium,True,open-meteo,2026-09-20 20:00:00+00:00,78.8,8.1,5.8,0,0.0,0,0.0
+2026_02_MIA_SF,SF,MIA,Home,outdoors,grass,Levi's Stadium,True,open-meteo,2026-09-20 20:00:00+00:00,74.2,8.4,5.4,0,0.0,1,0.0
+2026_02_SEA_ARI,ARI,SEA,Home,,grass,State Farm Stadium,True,open-meteo,2026-09-20 20:00:00+00:00,98.1,5.1,4.3,0,0.0,0,0.0
+2026_02_WAS_DAL,DAL,WAS,Home,,matrixturf,AT&T Stadium,True,open-meteo,2026-09-20 20:00:00+00:00,100.3,5.4,7.6,15,0.0,0,0.0
+2026_02_IND_KC,KC,IND,Home,outdoors,grass,GEHA Field at Arrowhead Stadium,False,missing,,,,,,,,0.0
+2026_02_NYG_LA,LA,NYG,Home,dome,matrixturf,SoFi Stadium,False,missing,,,,,,,,0.0

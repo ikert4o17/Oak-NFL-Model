@@ -2,49 +2,65 @@
   "season": 2026,
   "path_a": {
     "alive": true,
-    "used": [],
-    "history": [],
-    "current": {
-      "week": 1,
-      "primary": {
+    "used": [
+      "JAX"
+    ],
+    "history": [
+      {
+        "week": 1,
         "team": "JAX",
-        "opponent": "CLE",
+        "result": "WIN"
+      }
+    ],
+    "current": {
+      "week": 2,
+      "primary": {
+        "team": "SF",
+        "opponent": "MIA",
         "location": "vs",
-        "oak_margin": 5.63,
-        "survival_confidence": 0.7041,
-        "future_value": 0.6053
+        "oak_margin": 8.38,
+        "survival_confidence": 0.784,
+        "future_value": 0.7268
       },
       "alternate": {
-        "team": "PHI",
-        "opponent": "WAS",
+        "team": "KC",
+        "opponent": "IND",
         "location": "vs",
-        "oak_margin": 5.25,
-        "survival_confidence": 0.6918,
-        "future_value": 0.6913
+        "oak_margin": 8.49,
+        "survival_confidence": 0.7869,
+        "future_value": 0.7543
       }
     }
   },
   "path_b": {
     "alive": true,
-    "used": [],
-    "history": [],
-    "current": {
-      "week": 1,
-      "primary": {
+    "used": [
+      "JAX"
+    ],
+    "history": [
+      {
+        "week": 1,
         "team": "JAX",
-        "opponent": "CLE",
+        "result": "WIN"
+      }
+    ],
+    "current": {
+      "week": 2,
+      "primary": {
+        "team": "KC",
+        "opponent": "IND",
         "location": "vs",
-        "oak_margin": 5.63,
-        "survival_confidence": 0.7041,
-        "future_value": 0.6053
+        "oak_margin": 8.49,
+        "survival_confidence": 0.7869,
+        "future_value": 0.7543
       },
       "alternate": {
-        "team": "PHI",
-        "opponent": "WAS",
+        "team": "SF",
+        "opponent": "MIA",
         "location": "vs",
-        "oak_margin": 5.25,
-        "survival_confidence": 0.6918,
-        "future_value": 0.6913
+        "oak_margin": 8.38,
+        "survival_confidence": 0.784,
+        "future_value": 0.7268
       }
     }
   }
