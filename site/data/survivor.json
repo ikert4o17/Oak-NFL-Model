@@ -1,7 +1,7 @@
 {
   "season": 2026,
   "week": 2,
-  "generated_at": "2026-09-15T12:26:19.986159+00:00",
+  "generated_at": "2026-09-20T14:26:31.177305+00:00",
   "method_note": "Survival confidence is a ranking transform of Oak projected margin, not a calibrated betting probability.",
   "paths": {
     "path_a": {
