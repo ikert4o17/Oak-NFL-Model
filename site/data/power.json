@@ -1,295 +1,295 @@
 {
   "season": 2026,
-  "week": 2,
-  "generated_at": "2026-09-20T14:26:30.635564+00:00",
+  "week": 3,
+  "generated_at": "2026-09-22T13:01:56.337368+00:00",
   "teams": [
     {
       "rank": 1,
-      "team": "JAX",
-      "rating": 6.07,
+      "team": "SEA",
+      "rating": 6.67,
+      "movement": 2,
+      "epa_points": 5.07,
+      "success_points": 1.33,
+      "explosive_points": 0.2
+    },
+    {
+      "rank": 2,
+      "team": "SF",
+      "rating": 5.49,
       "movement": 4,
-      "epa_points": 4.64,
+      "epa_points": 4.07,
       "success_points": 1.28,
       "explosive_points": 0.07
     },
     {
-      "rank": 2,
-      "team": "KC",
-      "rating": 4.32,
-      "movement": 11,
-      "epa_points": 3.76,
-      "success_points": 0.37,
-      "explosive_points": 0.1
-    },
-    {
       "rank": 3,
-      "team": "SEA",
-      "rating": 4.19,
-      "movement": -1,
-      "epa_points": 3.27,
-      "success_points": 0.66,
-      "explosive_points": 0.17
+      "team": "LA",
+      "rating": 5.29,
+      "movement": 11,
+      "epa_points": 3.5,
+      "success_points": 1.52,
+      "explosive_points": 0.21
     },
     {
       "rank": 4,
       "team": "BUF",
-      "rating": 3.59,
+      "rating": 4.36,
       "movement": 0,
-      "epa_points": 3.12,
-      "success_points": 0.24,
+      "epa_points": 3.4,
+      "success_points": 0.75,
       "explosive_points": 0.14
     },
     {
       "rank": 5,
-      "team": "BAL",
-      "rating": 3.4,
-      "movement": 9,
-      "epa_points": 2.98,
-      "success_points": 0.29,
-      "explosive_points": 0.05
+      "team": "NE",
+      "rating": 3.82,
+      "movement": 3,
+      "epa_points": 2.91,
+      "success_points": 0.68,
+      "explosive_points": 0.16
     },
     {
       "rank": 6,
-      "team": "SF",
-      "rating": 3.19,
-      "movement": 11,
-      "epa_points": 2.43,
-      "success_points": 0.71,
-      "explosive_points": -0.03
+      "team": "JAX",
+      "rating": 3.6,
+      "movement": -5,
+      "epa_points": 2.65,
+      "success_points": 0.87,
+      "explosive_points": 0.0
     },
     {
       "rank": 7,
-      "team": "CHI",
-      "rating": 2.24,
-      "movement": 8,
-      "epa_points": 1.88,
-      "success_points": 0.26,
-      "explosive_points": 0.02
+      "team": "KC",
+      "rating": 3.57,
+      "movement": -5,
+      "epa_points": 2.87,
+      "success_points": 0.53,
+      "explosive_points": 0.1
     },
     {
       "rank": 8,
-      "team": "NE",
-      "rating": 2.15,
-      "movement": -5,
-      "epa_points": 1.54,
-      "success_points": 0.52,
+      "team": "BAL",
+      "rating": 3.27,
+      "movement": -3,
+      "epa_points": 2.1,
+      "success_points": 1.1,
       "explosive_points": 0.01
     },
     {
       "rank": 9,
       "team": "MIN",
-      "rating": 1.5,
-      "movement": 7,
-      "epa_points": 1.32,
-      "success_points": 0.18,
-      "explosive_points": -0.08
+      "rating": 1.72,
+      "movement": 0,
+      "epa_points": 1.36,
+      "success_points": 0.31,
+      "explosive_points": -0.02
     },
     {
       "rank": 10,
-      "team": "HOU",
-      "rating": 0.89,
-      "movement": -4,
-      "epa_points": 0.15,
-      "success_points": 0.76,
-      "explosive_points": -0.11
+      "team": "CHI",
+      "rating": 1.17,
+      "movement": -3,
+      "epa_points": 1.1,
+      "success_points": 0.03,
+      "explosive_points": -0.03
     },
     {
       "rank": 11,
-      "team": "DET",
-      "rating": 0.79,
-      "movement": -1,
-      "epa_points": 0.36,
-      "success_points": 0.36,
-      "explosive_points": -0.02
+      "team": "CAR",
+      "rating": 0.74,
+      "movement": 18,
+      "epa_points": 0.69,
+      "success_points": -0.1,
+      "explosive_points": 0.07
     },
     {
       "rank": 12,
       "team": "PHI",
-      "rating": 0.56,
-      "movement": -3,
-      "epa_points": 0.82,
-      "success_points": -0.47,
-      "explosive_points": 0.13
+      "rating": 0.33,
+      "movement": 0,
+      "epa_points": 0.68,
+      "success_points": -0.46,
+      "explosive_points": 0.04
     },
     {
       "rank": 13,
-      "team": "ARI",
-      "rating": 0.54,
-      "movement": 14,
-      "epa_points": 0.7,
-      "success_points": -0.2,
-      "explosive_points": -0.05
+      "team": "HOU",
+      "rating": 0.25,
+      "movement": -3,
+      "epa_points": -0.53,
+      "success_points": 0.8,
+      "explosive_points": -0.09
     },
     {
       "rank": 14,
-      "team": "LA",
-      "rating": 0.19,
-      "movement": -13,
-      "epa_points": -0.23,
-      "success_points": 0.24,
-      "explosive_points": 0.1
+      "team": "DEN",
+      "rating": 0.03,
+      "movement": 10,
+      "epa_points": -0.45,
+      "success_points": 0.41,
+      "explosive_points": 0.0
     },
     {
       "rank": 15,
-      "team": "GB",
-      "rating": 0.17,
-      "movement": -7,
-      "epa_points": -0.43,
-      "success_points": 0.35,
-      "explosive_points": 0.17
+      "team": "DAL",
+      "rating": -0.04,
+      "movement": 12,
+      "epa_points": 0.14,
+      "success_points": -0.24,
+      "explosive_points": -0.02
     },
     {
       "rank": 16,
-      "team": "NYG",
-      "rating": 0.11,
-      "movement": 7,
-      "epa_points": -0.1,
-      "success_points": 0.13,
-      "explosive_points": -0.01
+      "team": "LV",
+      "rating": -0.26,
+      "movement": 9,
+      "epa_points": -0.13,
+      "success_points": -0.18,
+      "explosive_points": -0.02
     },
     {
       "rank": 17,
-      "team": "PIT",
-      "rating": 0.04,
+      "team": "GB",
+      "rating": -0.39,
+      "movement": -2,
+      "epa_points": -0.57,
+      "success_points": -0.03,
+      "explosive_points": 0.14
+    },
+    {
+      "rank": 18,
+      "team": "CIN",
+      "rating": -0.5,
       "movement": 4,
-      "epa_points": 0.22,
+      "epa_points": -0.04,
+      "success_points": -0.47,
+      "explosive_points": -0.05
+    },
+    {
+      "rank": 19,
+      "team": "NO",
+      "rating": -0.65,
+      "movement": -1,
+      "epa_points": 0.14,
+      "success_points": -0.91,
+      "explosive_points": 0.05
+    },
+    {
+      "rank": 20,
+      "team": "DET",
+      "rating": -0.77,
+      "movement": -9,
+      "epa_points": -0.56,
+      "success_points": -0.23,
+      "explosive_points": -0.05
+    },
+    {
+      "rank": 21,
+      "team": "NYJ",
+      "rating": -1.4,
+      "movement": 7,
+      "epa_points": -1.41,
+      "success_points": -0.05,
+      "explosive_points": -0.01
+    },
+    {
+      "rank": 22,
+      "team": "IND",
+      "rating": -1.63,
+      "movement": 4,
+      "epa_points": -1.26,
+      "success_points": -0.38,
+      "explosive_points": -0.06
+    },
+    {
+      "rank": 23,
+      "team": "PIT",
+      "rating": -1.98,
+      "movement": -6,
+      "epa_points": -1.44,
+      "success_points": -0.42,
+      "explosive_points": -0.19
+    },
+    {
+      "rank": 24,
+      "team": "TB",
+      "rating": -2.04,
+      "movement": -5,
+      "epa_points": -1.71,
+      "success_points": -0.4,
+      "explosive_points": 0.0
+    },
+    {
+      "rank": 25,
+      "team": "LAC",
+      "rating": -2.32,
+      "movement": -2,
+      "epa_points": -2.12,
       "success_points": -0.21,
       "explosive_points": -0.05
     },
     {
-      "rank": 18,
-      "team": "NO",
-      "rating": 0.01,
-      "movement": 0,
-      "epa_points": -0.05,
-      "success_points": -0.05,
-      "explosive_points": 0.02
-    },
-    {
-      "rank": 19,
-      "team": "TB",
-      "rating": -0.56,
-      "movement": 1,
-      "epa_points": -0.64,
-      "success_points": 0.03,
-      "explosive_points": -0.04
-    },
-    {
-      "rank": 20,
-      "team": "ATL",
-      "rating": -0.72,
-      "movement": -1,
-      "epa_points": -0.88,
-      "success_points": 0.06,
-      "explosive_points": 0.01
-    },
-    {
-      "rank": 21,
-      "team": "WAS",
-      "rating": -1.04,
-      "movement": 5,
-      "epa_points": -1.29,
-      "success_points": 0.31,
-      "explosive_points": -0.15
-    },
-    {
-      "rank": 22,
-      "team": "CIN",
-      "rating": -1.24,
-      "movement": 3,
-      "epa_points": -0.9,
-      "success_points": -0.35,
-      "explosive_points": -0.07
-    },
-    {
-      "rank": 23,
-      "team": "LAC",
-      "rating": -1.47,
-      "movement": -11,
-      "epa_points": -1.33,
-      "success_points": -0.26,
-      "explosive_points": 0.03
-    },
-    {
-      "rank": 24,
-      "team": "DEN",
-      "rating": -1.67,
-      "movement": -17,
-      "epa_points": -1.99,
-      "success_points": 0.31,
-      "explosive_points": -0.07
-    },
-    {
-      "rank": 25,
-      "team": "LV",
-      "rating": -1.68,
-      "movement": 5,
-      "epa_points": -1.41,
-      "success_points": -0.22,
-      "explosive_points": -0.13
-    },
-    {
       "rank": 26,
-      "team": "IND",
-      "rating": -1.96,
-      "movement": -15,
-      "epa_points": -1.8,
-      "success_points": -0.2,
-      "explosive_points": -0.05
+      "team": "WAS",
+      "rating": -2.43,
+      "movement": -5,
+      "epa_points": -2.21,
+      "success_points": -0.15,
+      "explosive_points": -0.14
     },
     {
       "rank": 27,
-      "team": "DAL",
-      "rating": -1.98,
-      "movement": -5,
-      "epa_points": -1.23,
-      "success_points": -0.78,
-      "explosive_points": -0.05
+      "team": "ARI",
+      "rating": -2.94,
+      "movement": -14,
+      "epa_points": -1.95,
+      "success_points": -0.96,
+      "explosive_points": -0.1
     },
     {
       "rank": 28,
-      "team": "NYJ",
-      "rating": -2.28,
-      "movement": 4,
-      "epa_points": -1.95,
-      "success_points": -0.43,
-      "explosive_points": 0.0
+      "team": "CLE",
+      "rating": -3.26,
+      "movement": 3,
+      "epa_points": -2.32,
+      "success_points": -0.91,
+      "explosive_points": -0.1
     },
     {
       "rank": 29,
-      "team": "CAR",
-      "rating": -3.24,
-      "movement": -5,
-      "epa_points": -2.8,
-      "success_points": -0.48,
-      "explosive_points": -0.05
+      "team": "ATL",
+      "rating": -3.88,
+      "movement": -9,
+      "epa_points": -3.62,
+      "success_points": -0.23,
+      "explosive_points": -0.1
     },
     {
       "rank": 30,
-      "team": "MIA",
-      "rating": -3.71,
-      "movement": -1,
-      "epa_points": -2.69,
-      "success_points": -1.22,
-      "explosive_points": 0.12
+      "team": "NYG",
+      "rating": -4.9,
+      "movement": -14,
+      "epa_points": -3.64,
+      "success_points": -1.21,
+      "explosive_points": -0.13
     },
     {
       "rank": 31,
-      "team": "CLE",
-      "rating": -6.16,
-      "movement": -3,
-      "epa_points": -4.51,
-      "success_points": -1.66,
-      "explosive_points": -0.08
+      "team": "TEN",
+      "rating": -4.91,
+      "movement": 1,
+      "epa_points": -4.07,
+      "success_points": -0.85,
+      "explosive_points": -0.06
     },
     {
       "rank": 32,
-      "team": "TEN",
-      "rating": -6.27,
-      "movement": -1,
-      "epa_points": -5.03,
-      "success_points": -1.17,
-      "explosive_points": -0.15
+      "team": "MIA",
+      "rating": -6.03,
+      "movement": -2,
+      "epa_points": -4.38,
+      "success_points": -1.72,
+      "explosive_points": -0.01
     }
   ]
 }

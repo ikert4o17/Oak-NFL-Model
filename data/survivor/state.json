@@ -3,64 +3,76 @@
   "path_a": {
     "alive": true,
     "used": [
-      "JAX"
+      "JAX",
+      "SF"
     ],
     "history": [
       {
         "week": 1,
         "team": "JAX",
         "result": "WIN"
+      },
+      {
+        "week": 2,
+        "team": "SF",
+        "result": "WIN"
       }
     ],
     "current": {
-      "week": 2,
+      "week": 3,
       "primary": {
-        "team": "SF",
+        "team": "KC",
         "opponent": "MIA",
-        "location": "vs",
-        "oak_margin": 8.38,
-        "survival_confidence": 0.784,
-        "future_value": 0.7268
+        "location": "@",
+        "oak_margin": 8.35,
+        "survival_confidence": 0.7833,
+        "future_value": 0.7571
       },
       "alternate": {
-        "team": "KC",
-        "opponent": "IND",
+        "team": "BUF",
+        "opponent": "LAC",
         "location": "vs",
-        "oak_margin": 8.49,
-        "survival_confidence": 0.7869,
-        "future_value": 0.7543
+        "oak_margin": 7.6,
+        "survival_confidence": 0.7631,
+        "future_value": 0.6177
       }
     }
   },
   "path_b": {
     "alive": true,
     "used": [
-      "JAX"
+      "JAX",
+      "KC"
     ],
     "history": [
       {
         "week": 1,
         "team": "JAX",
         "result": "WIN"
+      },
+      {
+        "week": 2,
+        "team": "KC",
+        "result": "WIN"
       }
     ],
     "current": {
-      "week": 2,
+      "week": 3,
       "primary": {
-        "team": "KC",
-        "opponent": "IND",
+        "team": "SF",
+        "opponent": "ARI",
         "location": "vs",
-        "oak_margin": 8.49,
-        "survival_confidence": 0.7869,
-        "future_value": 0.7543
+        "oak_margin": 10.42,
+        "survival_confidence": 0.8323,
+        "future_value": 0.8099
       },
       "alternate": {
-        "team": "SF",
-        "opponent": "MIA",
+        "team": "BUF",
+        "opponent": "LAC",
         "location": "vs",
-        "oak_margin": 8.38,
-        "survival_confidence": 0.784,
-        "future_value": 0.7268
+        "oak_margin": 7.6,
+        "survival_confidence": 0.7631,
+        "future_value": 0.6177
       }
     }
   }
