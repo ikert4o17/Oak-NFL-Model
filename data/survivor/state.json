@@ -19,22 +19,22 @@
       }
     ],
     "current": {
-      "week": 3,
+      "week": 2,
       "primary": {
         "team": "KC",
-        "opponent": "MIA",
-        "location": "@",
-        "oak_margin": 8.35,
-        "survival_confidence": 0.7833,
-        "future_value": 0.7571
+        "opponent": "IND",
+        "location": "vs",
+        "oak_margin": 8.49,
+        "survival_confidence": 0.7869,
+        "future_value": 0.7543
       },
       "alternate": {
-        "team": "BUF",
-        "opponent": "LAC",
+        "team": "TB",
+        "opponent": "CLE",
         "location": "vs",
-        "oak_margin": 7.6,
-        "survival_confidence": 0.7631,
-        "future_value": 0.6177
+        "oak_margin": 6.14,
+        "survival_confidence": 0.7201,
+        "future_value": 0.5635
       }
     }
   },
@@ -57,22 +57,22 @@
       }
     ],
     "current": {
-      "week": 3,
+      "week": 2,
       "primary": {
         "team": "SF",
-        "opponent": "ARI",
+        "opponent": "MIA",
         "location": "vs",
-        "oak_margin": 10.42,
-        "survival_confidence": 0.8323,
-        "future_value": 0.8099
+        "oak_margin": 8.38,
+        "survival_confidence": 0.784,
+        "future_value": 0.7268
       },
       "alternate": {
-        "team": "BUF",
-        "opponent": "LAC",
+        "team": "TB",
+        "opponent": "CLE",
         "location": "vs",
-        "oak_margin": 7.6,
-        "survival_confidence": 0.7631,
-        "future_value": 0.6177
+        "oak_margin": 6.14,
+        "survival_confidence": 0.7201,
+        "future_value": 0.5635
       }
     }
   }
