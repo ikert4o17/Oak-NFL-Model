@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-24T12:59:15.857275+00:00",
+  "generated_at": "2026-09-25T12:34:50.589830+00:00",
   "closing_line_source": "nflverse schedules (Pro-Football-Reference)",
   "weekly": [
     {
@@ -28,6 +28,20 @@
       "ats_p": 0,
       "ou_w": 10,
       "ou_l": 6,
+      "ou_p": 0
+    },
+    {
+      "season": 2026,
+      "week": 3,
+      "games": 1,
+      "su_w": 0,
+      "su_l": 1,
+      "su_p": 0,
+      "ats_w": 1,
+      "ats_l": 0,
+      "ats_p": 0,
+      "ou_w": 1,
+      "ou_l": 0,
       "ou_p": 0
     }
   ],
@@ -3784,15 +3798,15 @@
       "home_baseline_qb_source": "recency-dropback-weighted-team-qb",
       "away_qb_context_source": "nflverse-depth-chart",
       "away_baseline_qb_source": "recency-dropback-weighted-team-qb",
-      "home_score": null,
-      "away_score": null,
+      "home_score": 14.0,
+      "away_score": 35.0,
       "closing_spread_line": -6.0,
       "closing_total_line": 43.5,
-      "final_home_margin": null,
-      "final_total": null,
-      "su_result": "PENDING",
-      "ats_result": "PENDING",
-      "ou_result": "PENDING"
+      "final_home_margin": -21.0,
+      "final_total": 49.0,
+      "su_result": "L",
+      "ats_result": "W",
+      "ou_result": "W"
     },
     {
       "game_id": "2026_03_CAR_CLE",
