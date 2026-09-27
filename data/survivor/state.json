@@ -4,44 +4,7 @@
     "alive": true,
     "used": [
       "JAX",
-      "SF"
-    ],
-    "history": [
-      {
-        "week": 1,
-        "team": "JAX",
-        "result": "WIN"
-      },
-      {
-        "week": 2,
-        "team": "SF",
-        "result": "WIN"
-      }
-    ],
-    "current": {
-      "week": 2,
-      "primary": {
-        "team": "KC",
-        "opponent": "IND",
-        "location": "vs",
-        "oak_margin": 8.49,
-        "survival_confidence": 0.7869,
-        "future_value": 0.7543
-      },
-      "alternate": {
-        "team": "TB",
-        "opponent": "CLE",
-        "location": "vs",
-        "oak_margin": 6.14,
-        "survival_confidence": 0.7201,
-        "future_value": 0.5635
-      }
-    }
-  },
-  "path_b": {
-    "alive": true,
-    "used": [
-      "JAX",
+      "SF",
       "KC"
     ],
     "history": [
@@ -52,27 +15,76 @@
       },
       {
         "week": 2,
+        "team": "SF",
+        "result": "WIN"
+      },
+      {
+        "week": 2,
         "team": "KC",
         "result": "WIN"
       }
     ],
     "current": {
-      "week": 2,
+      "week": 3,
       "primary": {
-        "team": "SF",
-        "opponent": "MIA",
+        "team": "BUF",
+        "opponent": "LAC",
         "location": "vs",
-        "oak_margin": 8.38,
-        "survival_confidence": 0.784,
-        "future_value": 0.7268
+        "oak_margin": 7.6,
+        "survival_confidence": 0.7631,
+        "future_value": 0.6177
       },
       "alternate": {
-        "team": "TB",
-        "opponent": "CLE",
+        "team": "SEA",
+        "opponent": "WAS",
+        "location": "@",
+        "oak_margin": 6.24,
+        "survival_confidence": 0.7232,
+        "future_value": 0.8467
+      }
+    }
+  },
+  "path_b": {
+    "alive": true,
+    "used": [
+      "JAX",
+      "KC",
+      "SF"
+    ],
+    "history": [
+      {
+        "week": 1,
+        "team": "JAX",
+        "result": "WIN"
+      },
+      {
+        "week": 2,
+        "team": "KC",
+        "result": "WIN"
+      },
+      {
+        "week": 2,
+        "team": "SF",
+        "result": "WIN"
+      }
+    ],
+    "current": {
+      "week": 3,
+      "primary": {
+        "team": "BUF",
+        "opponent": "LAC",
         "location": "vs",
-        "oak_margin": 6.14,
-        "survival_confidence": 0.7201,
-        "future_value": 0.5635
+        "oak_margin": 7.6,
+        "survival_confidence": 0.7631,
+        "future_value": 0.6177
+      },
+      "alternate": {
+        "team": "SEA",
+        "opponent": "WAS",
+        "location": "@",
+        "oak_margin": 6.24,
+        "survival_confidence": 0.7232,
+        "future_value": 0.8467
       }
     }
   }
