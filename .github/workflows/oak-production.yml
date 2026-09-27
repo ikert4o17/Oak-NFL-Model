@@ -48,16 +48,26 @@ jobs:
         run: python -m pip install --upgrade pip && pip install -e ".[dev]"
 
       - name: Refresh live context and generate or reuse frozen weekly card
-        run: python scripts/run_weekly_predictions.py --auto --refresh-schedule --live-qb --live-injuries --live-weather --freeze
+        id: weekly
+        run: |
+          python scripts/run_weekly_predictions.py --auto --refresh-schedule --live-qb --live-injuries --live-weather --freeze
+          manifest=$(ls -t data/context/oak_*_week_*_run_manifest.json | head -1)
+          season=$(python -c 'import json,sys; d=json.load(open(sys.argv[1])); print(int(d["season"]))' "$manifest")
+          week=$(python -c 'import json,sys; d=json.load(open(sys.argv[1])); print(int(d["week"]))' "$manifest")
+          echo "season=$season" >> "$GITHUB_OUTPUT"
+          echo "week=$week" >> "$GITHUB_OUTPUT"
 
       - name: Refresh closing-line results
         run: python scripts/refresh_results.py --refresh-schedule
 
       - name: Build dashboard and Survivor data
+        env:
+          OAK_SEASON: ${{ steps.weekly.outputs.season }}
+          OAK_WEEK: ${{ steps.weekly.outputs.week }}
         run: |
-          latest=$(ls -t data/predictions/oak_*.csv | head -1)
-          season=$(python -c 'import pandas as pd,sys; d=pd.read_csv(sys.argv[1]); print(int(d.iloc[0].season))' "$latest")
-          week=$(python -c 'import pandas as pd,sys; d=pd.read_csv(sys.argv[1]); print(int(d.iloc[0].week))' "$latest")
+          season="$OAK_SEASON"
+          week="$OAK_WEEK"
+          latest="data/predictions/oak_${season}_week_${week}.csv"
           live="data/previews/oak_${season}_week_${week}_live.csv"
           dashboard="$latest"
           if [ -f "$live" ]; then
