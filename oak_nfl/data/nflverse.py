@@ -1,8 +1,4 @@
-"""Download helpers for official nflverse release datasets.
-
-The model intentionally consumes season-partitioned parquet files directly from
-nflverse-data so historical inputs can be pinned by season and cached locally.
-"""
+"""Download helpers for official nflverse datasets."""
 
 from __future__ import annotations
 
@@ -12,6 +8,7 @@ import pandas as pd
 import requests
 
 NFLVERSE_RELEASE_BASE = "https://github.com/nflverse/nflverse-data/releases/download"
+NFLVERSE_GAMES_CSV = "https://raw.githubusercontent.com/nflverse/nfldata/master/data/games.csv"
 
 
 def pbp_url(season: int) -> str:
@@ -37,6 +34,11 @@ def snap_counts_url(season: int) -> str:
 def players_url() -> str:
     """Return the current nflverse player ID crosswalk."""
     return f"{NFLVERSE_RELEASE_BASE}/players/players.csv"
+
+
+def schedules_url() -> str:
+    """Return nflverse's combined game/schedule CSV with roof/temp/wind fields."""
+    return NFLVERSE_GAMES_CSV
 
 
 def download_file(url: str, destination: str | Path, *, timeout: int = 120) -> Path:
@@ -85,6 +87,23 @@ def load_players(cache_dir: str | Path = "data/raw/players") -> pd.DataFrame:
     if not path.exists():
         download_file(players_url(), path)
     return pd.read_csv(path, dtype=str, low_memory=False)
+
+
+def load_schedules(
+    seasons: int | list[int] | tuple[int, ...] | None = None,
+    cache_dir: str | Path = "data/raw/schedules",
+) -> pd.DataFrame:
+    """Load nflverse game/schedule data used for historical V11 weather tests."""
+    path = Path(cache_dir) / "games.csv"
+    if not path.exists():
+        download_file(schedules_url(), path)
+    games = pd.read_csv(path, low_memory=False)
+    if seasons is None:
+        return games
+    requested = [seasons] if isinstance(seasons, int) else list(seasons)
+    for season in requested:
+        _validate_season(int(season), minimum=1999)
+    return games[games["season"].isin(requested)].reset_index(drop=True)
 
 
 def _validate_season(season: int, *, minimum: int) -> None:
