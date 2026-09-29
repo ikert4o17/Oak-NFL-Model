@@ -1,33 +1,34 @@
 {
   "season": 2026,
-  "week": 3,
-  "generated_at": "2026-09-27T04:48:45.223617+00:00",
+  "week": 4,
+  "generated_at": "2026-09-29T12:51:41.972676+00:00",
   "method_note": "Survival confidence is a ranking transform of Oak projected margin, not a calibrated betting probability.",
   "paths": {
     "path_a": {
       "name": "Best Survival Path",
       "alive": true,
       "primary": {
-        "team": "BUF",
-        "opponent": "LAC",
+        "team": "MIN",
+        "opponent": "MIA",
         "location": "vs",
-        "oak_margin": 7.6,
-        "survival_confidence": 0.7631,
-        "future_value": 0.6177
+        "oak_margin": 11.43,
+        "survival_confidence": 0.853,
+        "future_value": 0.6582
       },
       "alternate": {
-        "team": "SEA",
-        "opponent": "WAS",
-        "location": "@",
-        "oak_margin": 6.24,
-        "survival_confidence": 0.7232,
-        "future_value": 0.8467
+        "team": "BAL",
+        "opponent": "TEN",
+        "location": "vs",
+        "oak_margin": 8.99,
+        "survival_confidence": 0.7996,
+        "future_value": 0.7311
       },
-      "reason": "Strong current spot with limited premium future value \u2014 a good team to use now.",
+      "reason": "Best balance of current survival strength and preserving stronger future options.",
       "used_teams": [
         "JAX",
         "SF",
-        "KC"
+        "KC",
+        "BUF"
       ],
       "history": [
         {
@@ -43,6 +44,11 @@
         {
           "week": 2,
           "team": "KC",
+          "result": "WIN"
+        },
+        {
+          "week": 3,
+          "team": "BUF",
           "result": "WIN"
         }
       ]
@@ -51,26 +57,27 @@
       "name": "Best Pick Now",
       "alive": true,
       "primary": {
-        "team": "BUF",
-        "opponent": "LAC",
+        "team": "MIN",
+        "opponent": "MIA",
         "location": "vs",
-        "oak_margin": 7.6,
-        "survival_confidence": 0.7631,
-        "future_value": 0.6177
+        "oak_margin": 11.43,
+        "survival_confidence": 0.853,
+        "future_value": 0.6582
       },
       "alternate": {
-        "team": "SEA",
-        "opponent": "WAS",
-        "location": "@",
-        "oak_margin": 6.24,
-        "survival_confidence": 0.7232,
-        "future_value": 0.8467
+        "team": "BAL",
+        "opponent": "TEN",
+        "location": "vs",
+        "oak_margin": 8.99,
+        "survival_confidence": 0.7996,
+        "future_value": 0.7311
       },
-      "reason": "Highest current-week survival confidence, with future value used only as a tiebreaker.",
+      "reason": "Oak's strongest current-week survival position.",
       "used_teams": [
         "JAX",
         "KC",
-        "SF"
+        "SF",
+        "BUF"
       ],
       "history": [
         {
@@ -86,6 +93,11 @@
         {
           "week": 2,
           "team": "SF",
+          "result": "WIN"
+        },
+        {
+          "week": 3,
+          "team": "BUF",
           "result": "WIN"
         }
       ]

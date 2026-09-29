@@ -5,7 +5,8 @@
     "used": [
       "JAX",
       "SF",
-      "KC"
+      "KC",
+      "BUF"
     ],
     "history": [
       {
@@ -22,25 +23,30 @@
         "week": 2,
         "team": "KC",
         "result": "WIN"
+      },
+      {
+        "week": 3,
+        "team": "BUF",
+        "result": "WIN"
       }
     ],
     "current": {
-      "week": 3,
+      "week": 4,
       "primary": {
-        "team": "BUF",
-        "opponent": "LAC",
+        "team": "MIN",
+        "opponent": "MIA",
         "location": "vs",
-        "oak_margin": 7.6,
-        "survival_confidence": 0.7631,
-        "future_value": 0.6177
+        "oak_margin": 11.43,
+        "survival_confidence": 0.853,
+        "future_value": 0.6582
       },
       "alternate": {
-        "team": "SEA",
-        "opponent": "WAS",
-        "location": "@",
-        "oak_margin": 6.24,
-        "survival_confidence": 0.7232,
-        "future_value": 0.8467
+        "team": "BAL",
+        "opponent": "TEN",
+        "location": "vs",
+        "oak_margin": 8.99,
+        "survival_confidence": 0.7996,
+        "future_value": 0.7311
       }
     }
   },
@@ -49,7 +55,8 @@
     "used": [
       "JAX",
       "KC",
-      "SF"
+      "SF",
+      "BUF"
     ],
     "history": [
       {
@@ -66,25 +73,30 @@
         "week": 2,
         "team": "SF",
         "result": "WIN"
+      },
+      {
+        "week": 3,
+        "team": "BUF",
+        "result": "WIN"
       }
     ],
     "current": {
-      "week": 3,
+      "week": 4,
       "primary": {
-        "team": "BUF",
-        "opponent": "LAC",
+        "team": "MIN",
+        "opponent": "MIA",
         "location": "vs",
-        "oak_margin": 7.6,
-        "survival_confidence": 0.7631,
-        "future_value": 0.6177
+        "oak_margin": 11.43,
+        "survival_confidence": 0.853,
+        "future_value": 0.6582
       },
       "alternate": {
-        "team": "SEA",
-        "opponent": "WAS",
-        "location": "@",
-        "oak_margin": 6.24,
-        "survival_confidence": 0.7232,
-        "future_value": 0.8467
+        "team": "BAL",
+        "opponent": "TEN",
+        "location": "vs",
+        "oak_margin": 8.99,
+        "survival_confidence": 0.7996,
+        "future_value": 0.7311
       }
     }
   }
