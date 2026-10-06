@@ -1,0 +1,16 @@
+game_id,home_team,away_team,location,roof,surface,stadium,weather_available,weather_source,forecast_time_utc,temperature_f,wind_mph,wind_gust_mph,precipitation_probability_pct,precipitation_in,weather_code,weather_auto_points
+2026_05_TB_DAL,DAL,TB,Home,,matrixturf,AT&T Stadium,True,open-meteo,2026-10-09 00:00:00+00:00,86.1,4.5,5.6,0,0.0,0,0.0
+2026_05_PHI_JAX,JAX,PHI,Home,outdoors,grass,Tottenham Hotspur Stadium,True,open-meteo,2026-10-11 13:00:00+00:00,76.6,7.3,22.6,39,0.012,51,0.0
+2026_05_CHI_GB,GB,CHI,Home,outdoors,grass,Lambeau Field,True,open-meteo,2026-10-11 17:00:00+00:00,77.8,16.0,24.8,1,0.0,1,0.0
+2026_05_CIN_MIA,MIA,CIN,Home,outdoors,grass,Hard Rock Stadium,True,open-meteo,2026-10-11 17:00:00+00:00,89.4,13.9,15.4,17,0.0,2,0.0
+2026_05_CLE_NYJ,NYJ,CLE,Home,outdoors,fieldturf,MetLife Stadium,True,open-meteo,2026-10-11 17:00:00+00:00,72.6,9.6,14.3,0,0.0,3,0.0
+2026_05_HOU_TEN,TEN,HOU,Home,outdoors,grass,Nissan Stadium,True,open-meteo,2026-10-11 17:00:00+00:00,67.4,7.8,27.7,48,0.028,53,0.0
+2026_05_IND_PIT,PIT,IND,Home,outdoors,grass,Acrisure Stadium,True,open-meteo,2026-10-11 17:00:00+00:00,72.9,5.1,9.2,16,0.0,3,0.0
+2026_05_LV_NE,NE,LV,Home,outdoors,fieldturf,Gillette Stadium,True,open-meteo,2026-10-11 17:00:00+00:00,71.1,14.2,21.9,0,0.0,3,0.0
+2026_05_MIN_NO,NO,MIN,Home,dome,sportturf,Caesars Superdome,True,open-meteo,2026-10-11 17:00:00+00:00,86.3,6.8,10.3,36,0.0,1,0.0
+2026_05_NYG_WAS,WAS,NYG,Home,outdoors,grass,Northwest Stadium,True,open-meteo,2026-10-11 17:00:00+00:00,73.2,9.4,15.2,16,0.0,3,0.0
+2026_05_DEN_LAC,LAC,DEN,Home,dome,matrixturf,SoFi Stadium,True,open-meteo,2026-10-11 20:00:00+00:00,78.9,11.9,13.0,7,0.0,1,0.0
+2026_05_DET_ARI,ARI,DET,Home,,grass,State Farm Stadium,True,open-meteo,2026-10-11 20:00:00+00:00,91.4,8.2,17.2,32,0.0,0,0.0
+2026_05_SF_SEA,SEA,SF,Home,outdoors,fieldturf,Lumen Field,True,open-meteo,2026-10-11 20:00:00+00:00,57.9,6.7,7.6,1,0.0,0,0.0
+2026_05_BAL_ATL,ATL,BAL,Home,,fieldturf,Mercedes-Benz Stadium,True,open-meteo,2026-10-12 00:00:00+00:00,65.0,8.1,21.7,55,0.0,45,0.0
+2026_05_BUF_LA,LA,BUF,Home,dome,matrixturf,SoFi Stadium,False,missing,,,,,,,,0.0
